@@ -52,6 +52,12 @@ for (const app of apps) {
   try {
     const res = await page.goto(url, { waitUntil: 'networkidle', timeout: 45000 });
     if (res && res.status() >= 400) throw new Error(`HTTP ${res.status()}`);
+    // Freeze anything that moves. A blinking caret or running animation makes
+    // every capture different, which would otherwise produce an endless stream
+    // of "refresh thumbnails" commits.
+    await page.addStyleTag({
+      content: '*,*::before,*::after{animation:none!important;transition:none!important;caret-color:transparent!important}',
+    });
     await page.waitForTimeout(1200);
     // Cards render at a few hundred pixels wide, so a 1x JPEG keeps the index
     // light. Drop any stale thumbnail in another format for the same slug.

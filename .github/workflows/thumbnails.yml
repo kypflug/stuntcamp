@@ -8,7 +8,6 @@ on:
 
 permissions:
   contents: write
-  actions: write
 
 concurrency:
   group: thumbnails
@@ -39,7 +38,7 @@ jobs:
       - name: Capture thumbnails
         run: node scripts/screenshot.mjs
 
-      - name: Commit and redeploy if anything changed
+      - name: Commit any changes
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -63,7 +62,7 @@ jobs:
             echo 'could not push thumbnails after 3 attempts'
             exit 1
           fi
-          # Pushes made with GITHUB_TOKEN do not trigger workflows, so ask for
-          # the deploy explicitly. The loop terminates because the next shots
-          # run finds no changes to commit.
-          gh workflow run deploy.yml --ref main
+          # Deliberately no deploy dispatch here. Pushes made with GITHUB_TOKEN
+          # do not trigger workflows, so this commit ends the chain and the new
+          # thumbnails ship with the next deploy. Dispatching one instead would
+          # loop forever the moment a capture is not byte-identical.
