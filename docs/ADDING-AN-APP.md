@@ -151,6 +151,11 @@ with `.env` are stripped from your output before publishing. Everything else in
 `output` is served publicly, so if you point `output` at your repo root, expect
 your source files to be readable.
 
+Cloudflare injects its Web Analytics beacon into every HTML page served from
+the zone. It's a single `<script>` tag from `static.cloudflareinsights.com`.
+Worth knowing if your app advertises itself as JavaScript-free — the page you
+authored has no script, but the page visitors receive has one.
+
 ## Try it locally
 
 No install required:
