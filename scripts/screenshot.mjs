@@ -11,7 +11,8 @@
  * Playwright is the one dependency in the repo and it is CI-only: the hub build
  * itself stays dependency-free and simply uses whatever thumbnails exist.
  */
-import { mkdirSync, rmSync } from 'node:fs';
+import { mkdirSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { chromium } from 'playwright';
 import { ROOT, loadApps, loadSite, publicUrl } from './registry.mjs';
@@ -35,46 +36,68 @@ if (ONLY) apps = apps.filter((a) => a.slug === ONLY);
 
 mkdirSync(THUMBS, { recursive: true });
 
+const FREEZE = '*,*::before,*::after{animation:none!important;transition:none!important;caret-color:transparent!important}';
+
+// Light and dark are captured separately and swapped with <picture>, so an
+// app's screenshot always matches the visitor's theme.
+const SCHEMES = [
+  { name: 'light', suffix: '' },
+  { name: 'dark', suffix: '-dark' },
+];
+
 const browser = await chromium.launch();
-const context = await browser.newContext({
-  viewport: VIEWPORT,
-  deviceScaleFactor: 1,
-  colorScheme: 'dark',
-  reducedMotion: 'reduce',
-});
 
 let ok = 0;
 let failed = 0;
 
 for (const app of apps) {
   const url = LOCAL ? `http://${app.slug}.localhost:${PORT}/` : publicUrl(app, site);
-  const page = await context.newPage();
-  try {
-    const res = await page.goto(url, { waitUntil: 'networkidle', timeout: 45000 });
-    if (res && res.status() >= 400) throw new Error(`HTTP ${res.status()}`);
-    // Freeze anything that moves. A blinking caret or running animation makes
-    // every capture different, which would otherwise produce an endless stream
-    // of "refresh thumbnails" commits.
-    await page.addStyleTag({
-      content: '*,*::before,*::after{animation:none!important;transition:none!important;caret-color:transparent!important}',
+
+  for (const scheme of SCHEMES) {
+    const context = await browser.newContext({
+      viewport: VIEWPORT,
+      deviceScaleFactor: 1,
+      colorScheme: scheme.name,
+      reducedMotion: 'reduce',
     });
-    await page.waitForTimeout(1200);
-    // Cards render at a few hundred pixels wide, so a 1x JPEG keeps the index
-    // light. Drop any stale thumbnail in another format for the same slug.
-    await page.screenshot({
-      path: join(THUMBS, `${app.slug}.jpg`),
-      type: 'jpeg',
-      quality: 82,
-      clip: { x: 0, y: 0, ...VIEWPORT },
-    });
-    for (const ext of ['png', 'webp']) rmSync(join(THUMBS, `${app.slug}.${ext}`), { force: true });
-    console.log(`shot  ${app.slug} <- ${url}`);
-    ok += 1;
-  } catch (err) {
-    console.error(`FAIL  ${app.slug} <- ${url}: ${err.message}`);
-    failed += 1;
-  } finally {
-    await page.close();
+    const page = await context.newPage();
+    try {
+      const res = await page.goto(url, { waitUntil: 'networkidle', timeout: 45000 });
+      if (res && res.status() >= 400) throw new Error(`HTTP ${res.status()}`);
+      // Freeze anything that moves. A blinking caret or running animation makes
+      // every capture different, which would otherwise produce an endless stream
+      // of "refresh thumbnails" commits.
+      await page.addStyleTag({ content: FREEZE });
+      await page.waitForTimeout(1200);
+      // Cards render at a few hundred pixels wide, so a 1x JPEG keeps the index
+      // light. Drop any stale thumbnail in another format for the same slug.
+      await page.screenshot({
+        path: join(THUMBS, `${app.slug}${scheme.suffix}.jpg`),
+        type: 'jpeg',
+        quality: 82,
+        clip: { x: 0, y: 0, ...VIEWPORT },
+      });
+      for (const ext of ['png', 'webp']) {
+        rmSync(join(THUMBS, `${app.slug}${scheme.suffix}.${ext}`), { force: true });
+      }
+      console.log(`shot  ${app.slug} (${scheme.name}) <- ${url}`);
+      ok += 1;
+    } catch (err) {
+      console.error(`FAIL  ${app.slug} (${scheme.name}) <- ${url}: ${err.message}`);
+      failed += 1;
+    } finally {
+      await page.close();
+      await context.close();
+    }
+  }
+
+  // Plenty of apps ignore prefers-color-scheme, in which case both captures are
+  // identical. Drop the redundant dark copy so the page emits a plain <img>.
+  const light = join(THUMBS, `${app.slug}.jpg`);
+  const dark = join(THUMBS, `${app.slug}-dark.jpg`);
+  if (existsSync(light) && existsSync(dark) && readFileSync(light).equals(readFileSync(dark))) {
+    rmSync(dark, { force: true });
+    console.log(`same  ${app.slug} renders identically in both themes, keeping one`);
   }
 }
 

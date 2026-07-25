@@ -7,7 +7,7 @@
  */
 import { cpSync, existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { DIST, ROOT, isHosted, loadApps, loadSite, publicUrl, validateAll } from '../scripts/registry.mjs';
+import { DIST, ROOT, loadApps, loadSite, publicUrl, validateAll } from '../scripts/registry.mjs';
 
 const HUB = join(ROOT, 'hub');
 const THUMBS = join(HUB, 'assets', 'thumbs');
@@ -18,34 +18,50 @@ const esc = (s) => String(s ?? '')
   .replace(/>/g, '&gt;')
   .replace(/"/g, '&quot;');
 
-const HOST_LABEL = {
-  'in-repo': { badge: 'hosted here', cls: 'here', meta: 'in the stuntcamp repo' },
-  'source-build': { badge: 'hosted here', cls: 'here', meta: 'built from source' },
-  artifact: { badge: 'hosted here', cls: 'here', meta: 'prebuilt upload' },
-  redirect: { badge: 'lives elsewhere', cls: 'away', meta: 'external host' },
-  proxy: { badge: 'lives elsewhere', cls: 'away', meta: 'external host' },
-  link: { badge: 'repo only', cls: 'repo', meta: 'not a website' },
-};
+/**
+ * A mountain range for the wordmark to sit in front of, echoing the watercolor
+ * hero on aldenblog.io. Three ridges, back to front, coloured from CSS custom
+ * properties so it follows the light/dark theme. The bases are faded out by a
+ * mask in the stylesheet, so the ridges read as peaks rather than as a block.
+ */
+const RANGE = `<svg class="range" viewBox="0 0 180 96" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+<path class="r1" d="M0 96 16 22l18 20L56 10l22 28 18-20 24 26 20-24 22 28 20 28z"/>
+<path class="r2" d="M0 96 20 44l22 16 22-28 24 24 22-16 24 22 24-18 22 52z"/>
+<path class="r3" d="M0 96 24 60l24 16 24-18 24 16 26-14 24 18 22-16 12 34z"/>
+</svg>`;
 
-/** Auto-captured screenshots land in hub/assets/thumbs/<slug>.(webp|png). */
-function findThumb(app) {
-  if (app.thumbnail) return app.thumbnail;
-  if (!existsSync(THUMBS)) return null;
-  for (const ext of ['webp', 'png', 'jpg']) {
-    if (existsSync(join(THUMBS, `${app.slug}.${ext}`))) return `assets/thumbs/${app.slug}.${ext}`;
-  }
-  return null;
+/**
+ * Auto-captured screenshots land in hub/assets/thumbs/ as a light/dark pair,
+ * following the -dark suffix convention aldenblog.io uses. A manifest override
+ * supplies one image for both themes.
+ */
+function findThumbs(app) {
+  if (app.thumbnail) return { light: app.thumbnail, dark: null };
+  if (!existsSync(THUMBS)) return { light: null, dark: null };
+  const pick = (suffix) => {
+    for (const ext of ['webp', 'png', 'jpg']) {
+      if (existsSync(join(THUMBS, `${app.slug}${suffix}.${ext}`))) {
+        return `assets/thumbs/${app.slug}${suffix}.${ext}`;
+      }
+    }
+    return null;
+  };
+  return { light: pick(''), dark: pick('-dark') };
 }
 
 function card(app, site) {
-  const host = HOST_LABEL[app.type] ?? HOST_LABEL.link;
   const href = publicUrl(app, site);
-  const thumb = findThumb(app);
+  const { light, dark } = findThumbs(app);
   const accent = app.accent || '#8aa4c8';
 
-  const shot = thumb
-    ? `<img src="${esc(thumb)}" alt="Screenshot of ${esc(app.name)}" loading="lazy" decoding="async" width="800" height="500">`
-    : `<span class="glyph" aria-hidden="true">${esc(app.name.slice(0, 2))}</span>`;
+  let shot;
+  if (light && dark) {
+    shot = `<picture><source media="(prefers-color-scheme: dark)" srcset="${esc(dark)}"><img src="${esc(light)}" alt="Screenshot of ${esc(app.name)}" loading="lazy" decoding="async" width="1280" height="800"></picture>`;
+  } else if (light) {
+    shot = `<img src="${esc(light)}" alt="Screenshot of ${esc(app.name)}" loading="lazy" decoding="async" width="1280" height="800">`;
+  } else {
+    shot = `<span class="glyph" aria-hidden="true">${esc(app.name.slice(0, 2))}</span>`;
+  }
 
   const tags = (app.tags || []).length
     ? `<ul class="tags">${app.tags.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>`
@@ -64,29 +80,18 @@ function card(app, site) {
     : '';
 
   return `<article class="card" style="--accent:${esc(accent)}">
-  <div class="shot">${shot}<span class="badge ${host.cls}">${esc(host.badge)}</span></div>
+  <div class="shot">${shot}</div>
   <div class="body">
     <h2><a href="${esc(href)}">${esc(app.name)}</a></h2>
     <p class="tagline">${esc(app.tagline)}</p>
     ${note}
     ${tags}
-    <p class="meta">${author}${source}<span class="host">${esc(host.meta)}</span></p>
+    <p class="meta">${author}${source}</p>
   </div>
 </article>`;
 }
 
 function page({ site, apps }) {
-  const hosted = apps.filter(isHosted).length;
-  const elsewhere = apps.filter((a) => a.type === 'redirect' || a.type === 'proxy').length;
-  const links = apps.filter((a) => a.type === 'link').length;
-
-  const counts = [
-    `<li><b>${apps.length}</b> ${apps.length === 1 ? 'thing' : 'things'}</li>`,
-    hosted ? `<li><b>${hosted}</b> hosted here</li>` : '',
-    elsewhere ? `<li><b>${elsewhere}</b> elsewhere</li>` : '',
-    links ? `<li><b>${links}</b> repo only</li>` : '',
-  ].filter(Boolean).join('');
-
   const body = apps.length
     ? `<div class="grid">\n${apps.map((a) => card(a, site)).join('\n')}\n</div>`
     : `<p class="empty">Nothing parked here yet.</p>`;
@@ -98,7 +103,8 @@ function page({ site, apps }) {
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${esc(site.title)} &mdash; ${esc(site.tagline)}</title>
 <meta name="description" content="${esc(site.blurb)}">
-<meta name="theme-color" content="#0b0f17">
+<meta name="theme-color" content="#e4ebe7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0d1516" media="(prefers-color-scheme: dark)">
 <meta property="og:title" content="${esc(site.title)}">
 <meta property="og:description" content="${esc(site.blurb)}">
 <meta property="og:type" content="website">
@@ -109,9 +115,8 @@ function page({ site, apps }) {
 <body>
 <div class="wrap">
 <header>
-  <h1 class="mark"><em>stunt</em>camp<span>${esc(site.domain)}</span></h1>
-  <p class="lede">${esc(site.blurb)} <b>Every one of them gets a subdomain.</b></p>
-  <ul class="counts">${counts}</ul>
+  <h1 class="mark"><em>stunt</em><span class="camp">${RANGE}<i>camp</i></span></h1>
+  <p class="lede">${esc(site.blurb)}</p>
 </header>
 <main>
 ${body}
@@ -133,8 +138,10 @@ function notFound(site) {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>nothing parked here &mdash; ${esc(site.title)}</title>
-<meta name="theme-color" content="#0b0f17">
-<link rel="stylesheet" href="/assets/style.css">
+<meta name="theme-color" content="#e4ebe7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0d1516" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="https://${esc(site.domain)}/assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://${esc(site.domain)}/assets/style.css">
 </head>
 <body>
 <div class="oops">

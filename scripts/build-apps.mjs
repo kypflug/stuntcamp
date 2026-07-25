@@ -162,11 +162,15 @@ function buildFromArtifact(app) {
 function placeholder(app, message) {
   const dir = join(OUT_ROOT, app.slug);
   mkdirSync(dir, { recursive: true });
+  // Absolute URL on purpose: this page is served from <slug>.stuntcamp.app,
+  // where a root-relative /assets path routes back into the app, not the hub.
   writeFileSync(join(dir, 'index.html'), `<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${app.name} is between takes</title>
-<link rel="stylesheet" href="/assets/style.css"></head>
+<meta name="theme-color" content="#e4ebe7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0d1516" media="(prefers-color-scheme: dark)">
+<link rel="stylesheet" href="https://stuntcamp.app/assets/style.css"></head>
 <body><div class="oops">
 <h1>between takes</h1>
 <p><code>${app.slug}</code> did not build on the last deploy.</p>
