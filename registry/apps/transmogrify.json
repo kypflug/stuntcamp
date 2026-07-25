@@ -3,7 +3,6 @@
   "slug": "transmogrify",
   "name": "transmogrify",
   "tagline": "A browser extension that transmogrifies web pages for focus and readability.",
-  "note": "Not a website, so there is nothing to host — this card points at the repo.",
   "type": "link",
   "author": { "name": "kypflug", "url": "https://github.com/kypflug" },
   "source": "https://github.com/kypflug/transmogrify-ext",

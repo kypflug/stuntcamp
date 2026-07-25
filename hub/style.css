@@ -216,7 +216,6 @@ header { margin-bottom: clamp(2rem, 5vw, 3.25rem); }
 .card:hover h2 a { color: var(--link-hover); }
 
 .tagline { margin: 0; color: var(--dim); font-size: .92rem; }
-.note { margin: 0; color: var(--dimmer); font-size: .8rem; }
 
 .tags {
   margin: .15rem 0 0;

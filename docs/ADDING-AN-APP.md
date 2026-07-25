@@ -111,7 +111,6 @@ with no subdomain at all.
 | `name` | yes | Display name on the card. |
 | `tagline` | yes | One line, 160 characters max. |
 | `type` | yes | One of the six above. |
-| `note` | no | A second, longer line on the card. 240 characters max. |
 | `author` | no | `{ "name", "url" }`. Credits you on the card. |
 | `source` | no | Repo or project URL, linked from the card. |
 | `url` | for redirect/proxy/link | Where it actually lives. |

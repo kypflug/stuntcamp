@@ -50,7 +50,7 @@ const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const SHA_RE = /^[0-9a-f]{40}$/;
 
 const KNOWN_KEYS = new Set([
-  'slug', 'name', 'tagline', 'note', 'type', 'author', 'source', 'url',
+  'slug', 'name', 'tagline', 'type', 'author', 'source', 'url',
   'build', 'tags', 'accent', 'thumbnail', 'added', 'visible',
   '_file', '_basename',
 ]);
@@ -103,10 +103,6 @@ export function validateApp(app, site, seenSlugs = new Set()) {
   } else if (app.tagline.length > 160) {
     err('tagline must be 160 characters or fewer');
   }
-  if (app.note != null && (typeof app.note !== 'string' || app.note.length > 240)) {
-    err('note must be a string of 240 characters or fewer');
-  }
-
   if (!ALL_TYPES.includes(app.type)) {
     err(`type must be one of: ${ALL_TYPES.join(', ')}`);
   }

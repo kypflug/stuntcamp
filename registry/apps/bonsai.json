@@ -3,7 +3,6 @@
   "slug": "bonsai",
   "name": "bonsai",
   "tagline": "A local-first canvas for modelling orgs and portfolios side by side.",
-  "note": "Lives at its own address. People and Projects canvases, versioned .bonsai.json import/export, everything stays on your device.",
   "type": "redirect",
   "author": { "name": "kypflug", "url": "https://github.com/kypflug" },
   "source": "https://github.com/kypflug/bonsai",

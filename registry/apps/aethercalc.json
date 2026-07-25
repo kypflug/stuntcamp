@@ -3,7 +3,6 @@
   "slug": "aethercalc",
   "name": "aethercalc",
   "tagline": "A calculator built from HTML forms and CSS arithmetic. No JavaScript.",
-  "note": "Radio buttons set custom properties, :has() picks the calc(), and CSS counters print the answer. Division answers exactly and hands back a remainder.",
   "type": "source-build",
   "author": { "name": "kypflug", "url": "https://github.com/kypflug" },
   "source": "https://github.com/kypflug/aethercalc",

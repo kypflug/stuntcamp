@@ -67,8 +67,6 @@ function card(app, site) {
     ? `<ul class="tags">${app.tags.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>`
     : '';
 
-  const note = app.note ? `<p class="note">${esc(app.note)}</p>` : '';
-
   const author = app.author
     ? (app.author.url
       ? `<a href="${esc(app.author.url)}" rel="noopener">${esc(app.author.name)}</a>`
@@ -84,7 +82,6 @@ function card(app, site) {
   <div class="body">
     <h2><a href="${esc(href)}">${esc(app.name)}</a></h2>
     <p class="tagline">${esc(app.tagline)}</p>
-    ${note}
     ${tags}
     <p class="meta">${author}${source}</p>
   </div>
