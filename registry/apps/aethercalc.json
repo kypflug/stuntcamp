@@ -9,7 +9,7 @@
   "source": "https://github.com/kypflug/aethercalc",
   "build": {
     "repo": "kypflug/aethercalc",
-    "ref": "99c16c7637189a951f4d284eaa7de58a1cd0f2af",
+    "ref": "f0d03201aba02e32e6888e2f7005cd08006ff6fe",
     "command": "npm run build",
     "output": "."
   },

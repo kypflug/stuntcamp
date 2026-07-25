@@ -70,6 +70,11 @@ stops an upstream force-push from silently changing what we publish.
 Only use `install: "npm ci"` if your repo has a `package-lock.json`. If it
 doesn't, use `npm install` or omit `install` entirely.
 
+If your repo commits generated output, remember that **we publish what your
+build produces, not what you committed**. Hand-editing a generated file and
+pushing it will appear to work on GitHub and then vanish here, because the
+build regenerates it. Put the change in the generator.
+
 ### artifact
 
 Build in your own CI and let us mirror the result.
