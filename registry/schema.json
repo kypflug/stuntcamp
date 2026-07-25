@@ -91,8 +91,20 @@
       "pattern": "^#[0-9a-fA-F]{6}$"
     },
     "thumbnail": {
-      "type": ["string", "null"],
-      "description": "Path or URL overriding the auto-captured screenshot. null = auto."
+      "description": "Overrides the auto-captured screenshot. A string is used for both themes; { light, dark } supplies a pair. null = auto.",
+      "oneOf": [
+        { "type": "string", "minLength": 1 },
+        { "type": "null" },
+        {
+          "type": "object",
+          "required": ["light"],
+          "additionalProperties": false,
+          "properties": {
+            "light": { "type": "string", "minLength": 1 },
+            "dark": { "type": "string", "minLength": 1 }
+          }
+        }
+      ]
     },
     "added": {
       "type": "string",

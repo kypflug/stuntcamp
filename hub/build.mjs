@@ -53,10 +53,16 @@ const WORDMARK_STYLE = `<style>
 /**
  * Auto-captured screenshots land in hub/assets/thumbs/ as a light/dark pair,
  * following the -dark suffix convention aldenblog.io uses. A manifest override
- * supplies one image for both themes.
+ * replaces them: a string is used for both themes, and `{ light, dark }`
+ * supplies a pair that gets the same <picture> treatment as a captured one.
  */
 function findThumbs(app) {
-  if (app.thumbnail) return { light: app.thumbnail, dark: null };
+  if (typeof app.thumbnail === 'string' && app.thumbnail) {
+    return { light: app.thumbnail, dark: null };
+  }
+  if (app.thumbnail && typeof app.thumbnail === 'object') {
+    return { light: app.thumbnail.light || null, dark: app.thumbnail.dark || null };
+  }
   if (!existsSync(THUMBS)) return { light: null, dark: null };
   const pick = (suffix) => {
     for (const ext of ['webp', 'png', 'jpg']) {

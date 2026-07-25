@@ -125,8 +125,22 @@ export function validateApp(app, site, seenSlugs = new Set()) {
       err('at most 6 tags');
     }
   }
-  if (app.thumbnail != null && typeof app.thumbnail !== 'string') {
-    err('thumbnail must be a string path/URL or null');
+  if (app.thumbnail != null) {
+    if (typeof app.thumbnail === 'string') {
+      if (!app.thumbnail.trim()) err('thumbnail must not be empty');
+    } else if (typeof app.thumbnail === 'object' && !Array.isArray(app.thumbnail)) {
+      for (const key of Object.keys(app.thumbnail)) {
+        if (key !== 'light' && key !== 'dark') err(`unknown thumbnail field "${key}"`);
+      }
+      if (typeof app.thumbnail.light !== 'string' || !app.thumbnail.light.trim()) {
+        err('thumbnail.light is required when thumbnail is an object');
+      }
+      if (app.thumbnail.dark != null && typeof app.thumbnail.dark !== 'string') {
+        err('thumbnail.dark must be a string path/URL');
+      }
+    } else {
+      err('thumbnail must be a string path/URL, { light, dark }, or null');
+    }
   }
 
   if (['redirect', 'proxy', 'link'].includes(app.type)) {
