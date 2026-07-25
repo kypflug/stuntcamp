@@ -125,7 +125,7 @@ with no subdomain at all.
 ## Thumbnails
 
 Leave `thumbnail` unset. After each deploy a Playwright job visits every live
-app at 1280×800 and commits the screenshot to `hub/assets/thumbs/<slug>.png`.
+app at 1280×800 and commits the screenshot to `hub/assets/thumbs/<slug>.jpg`.
 Set `thumbnail` only if you want something hand-made.
 
 ## What CI does to your PR

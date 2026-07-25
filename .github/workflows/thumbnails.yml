@@ -51,7 +51,18 @@ jobs:
             exit 0
           fi
           git commit -m 'chore: refresh thumbnails'
-          git push
+          # main may have moved while the screenshots were being taken.
+          for attempt in 1 2 3; do
+            if git push; then
+              pushed=1
+              break
+            fi
+            git pull --rebase --autostash origin main
+          done
+          if [ -z "${pushed:-}" ]; then
+            echo 'could not push thumbnails after 3 attempts'
+            exit 1
+          fi
           # Pushes made with GITHUB_TOKEN do not trigger workflows, so ask for
           # the deploy explicitly. The loop terminates because the next shots
           # run finds no changes to commit.
