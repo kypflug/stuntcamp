@@ -3,6 +3,10 @@
   "title": "stuntcamp",
   "tagline": "a place to park stunt apps",
   "blurb": "Small, strange, single-purpose web things.",
+  "author": {
+    "name": "kyle pflug",
+    "url": "https://aldenblog.io"
+  },
   "appPathPrefix": "/a",
   "reservedSlugs": [
     "www",

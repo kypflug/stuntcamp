@@ -19,30 +19,48 @@ const esc = (s) => String(s ?? '')
   .replace(/"/g, '&quot;');
 
 /**
- * The mountain scene that shows through the "camp" letterforms: a sky gradient
- * with three ridges. Peaks are placed low in the viewBox so they fall inside
- * the x-height band, which is the only part of the word wide enough to read.
- * Emitted as a data URI so it costs no extra request.
+ * The mountain scene that shows through the "camp" letterforms. Colours are the
+ * three stops of the wordmark's former gradient, so the palette moved into the
+ * mountains rather than being lost: sage in the distance, teal in the middle,
+ * slate in front. Every layer is filled with its own vertical gradient so no
+ * edge reads as a flat cut-out, and only the distant range keeps hard angular
+ * peaks — close enough in tone to the sky to pass for haze. Peaks sit low in
+ * the viewBox to land inside the x-height, the only band wide enough to show
+ * them. Emitted as a data URI so it costs no extra request.
  */
-function scene({ sky1, sky2, r1, r2, r3 }) {
+function scene(c) {
+  const grad = (id, top, bottom) =>
+    `<linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1">`
+    + `<stop offset="0" stop-color="${top}"/><stop offset="1" stop-color="${bottom}"/>`
+    + `</linearGradient>`;
+
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 96" preserveAspectRatio="none">`
-    + `<defs><linearGradient id="s" x1="0" y1="0" x2="0" y2="1">`
-    + `<stop offset="0" stop-color="${sky1}"/><stop offset="1" stop-color="${sky2}"/>`
-    + `</linearGradient></defs>`
-    + `<rect width="180" height="96" fill="url(#s)"/>`
-    + `<path fill="${r1}" d="M0 96V54l34-26 40 36 38-38 38 32 30-20v52z"/>`
-    + `<path fill="${r2}" d="M0 96V66l24-8 34 20 38-26 38 24 34-18 12 8v30z"/>`
-    + `<path fill="${r3}" d="M0 96V82l40-8 40 14 40-18 38 16 22-8v18z"/>`
+    + `<defs>`
+    + grad('sky', c.sky1, c.sky2)
+    + grad('far', c.far1, c.far2)
+    + grad('mid', c.mid1, c.mid2)
+    + grad('near', c.near1, c.near2)
+    + `</defs>`
+    + `<rect width="180" height="96" fill="url(#sky)"/>`
+    + `<path fill="url(#far)" d="M0 96V60l18-16 12 10 18-24 18 22 14-12 18-8 16 20 18-18 18 20 16-12 14 16v38z"/>`
+    + `<path fill="url(#mid)" d="M0 96V72q14-10 26-5t26-10q14-15 28-6t28-3q14-11 28 2t24 7v42z"/>`
+    + `<path fill="url(#near)" d="M0 96V83c14-9 28-11 44-5s28 11 44 5 28-13 44-7 34 9 48 3v17z"/>`
     + `</svg>`;
   return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
 }
 
 const SCENE_LIGHT = scene({
-  sky1: '#8fd0d8', sky2: '#3f8b98', r1: '#2b7278', r2: '#1a5349', r3: '#0d2a21',
+  sky1: '#7fada4', sky2: '#5b949a',
+  far1: '#5d8b7c', far2: '#4a7a6a',
+  mid1: '#3d8894', mid2: '#2a7d8a',
+  near1: '#456575', near2: '#3d5a65',
 });
 
 const SCENE_DARK = scene({
-  sky1: '#cbf1f6', sky2: '#7ed3de', r1: '#8ad2c5', r2: '#57a89a', r3: '#317264',
+  sky1: '#cdeae1', sky2: '#a9d5c8',
+  far1: '#97c9b8', far2: '#8ec4b2',
+  mid1: '#79b6a4', mid2: '#6aa694',
+  near1: '#58b3c0', near2: '#429aa9',
 });
 
 const WORDMARK_STYLE = `<style>
@@ -140,7 +158,10 @@ ${WORDMARK_STYLE}
 <div class="wrap">
 <header>
   <h1 class="mark"><em>stunt</em><i class="camp">camp</i></h1>
-  <p class="lede">${esc(site.blurb)}</p>
+  <div class="says">
+    <p class="lede">${esc(site.blurb)}</p>
+    ${site.author ? `<p class="by">a project by <a href="${esc(site.author.url)}" rel="noopener">${esc(site.author.name)}</a></p>` : ''}
+  </div>
 </header>
 <main>
 ${body}
