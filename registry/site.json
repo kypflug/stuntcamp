@@ -1,0 +1,33 @@
+{
+  "domain": "stuntcamp.app",
+  "title": "stuntcamp",
+  "tagline": "a place to park stunt apps",
+  "blurb": "Small, strange, single-purpose web things. Some live here, some just visit.",
+  "appPathPrefix": "/a",
+  "reservedSlugs": [
+    "www",
+    "api",
+    "app",
+    "apps",
+    "a",
+    "admin",
+    "assets",
+    "cdn",
+    "mail",
+    "smtp",
+    "imap",
+    "pop",
+    "ftp",
+    "ns",
+    "ns1",
+    "ns2",
+    "dev",
+    "staging",
+    "test",
+    "static",
+    "docs",
+    "blog",
+    "status",
+    "stuntcamp"
+  ]
+}

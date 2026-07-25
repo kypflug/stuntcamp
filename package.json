@@ -1,0 +1,25 @@
+{
+  "name": "stuntcamp",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A place to park stunt apps. Registry-driven hub at stuntcamp.app.",
+  "scripts": {
+    "validate": "node scripts/validate-registry.mjs",
+    "build:hub": "node hub/build.mjs",
+    "build:apps": "node scripts/build-apps.mjs",
+    "build:routes": "node scripts/build-routes.mjs",
+    "build": "npm run validate && npm run build:hub && npm run build:apps && npm run build:routes",
+    "check": "npm run validate && npm run build:hub && npm run build:apps -- --strict && npm run build:routes",
+    "serve": "node scripts/serve.mjs",
+    "shots": "node scripts/screenshot.mjs",
+    "deploy:worker": "wrangler deploy --config worker/wrangler.toml"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "playwright": "^1.50.0",
+    "wrangler": "^4.0.0"
+  }
+}

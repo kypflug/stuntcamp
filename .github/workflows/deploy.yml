@@ -1,0 +1,74 @@
+name: deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+  schedule:
+    # Rebuild nightly so apps tracking a branch pick up upstream changes.
+    - cron: '17 9 * * *'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Validate registry
+        run: node scripts/validate-registry.mjs
+
+      - name: Build hub index
+        run: node hub/build.mjs
+
+      # Not --strict: a single broken app gets a placeholder page rather than
+      # blocking everyone else's deploy. The report below flags it.
+      - name: Build apps
+        run: node scripts/build-apps.mjs
+
+      - name: Build routing table
+        run: node scripts/build-routes.mjs
+
+      - name: Deploy to Azure Static Web Apps
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          action: upload
+          app_location: dist
+          skip_app_build: true
+          skip_api_build: true
+
+      - name: Deploy Cloudflare Worker
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          command: deploy --config worker/wrangler.toml
+
+      - name: Report
+        if: always()
+        run: |
+          {
+            echo '### deployed'
+            echo
+            echo '| app | type | result |'
+            echo '| --- | --- | --- |'
+            node -e '
+              const r = require("./dist/build-report.json");
+              for (const a of r) console.log(`| ${a.slug} | ${a.type} | ${a.ok ? `ok (${a.files} files)` : "**failed** — " + a.error.split("\n")[0]} |`);
+            '
+          } >> "$GITHUB_STEP_SUMMARY"

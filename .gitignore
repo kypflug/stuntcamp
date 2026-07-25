@@ -1,0 +1,11 @@
+dist/
+node_modules/
+.wrangler/
+.env
+.env.local
+*.log
+.DS_Store
+.tmp/
+
+# Generated from the registry by scripts/build-routes.mjs on every build.
+worker/routes.json

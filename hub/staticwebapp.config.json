@@ -1,0 +1,16 @@
+{
+  "responseOverrides": {
+    "404": {
+      "rewrite": "/404.html"
+    }
+  },
+  "globalHeaders": {
+    "x-content-type-options": "nosniff"
+  },
+  "mimeTypes": {
+    ".webp": "image/webp",
+    ".svg": "image/svg+xml",
+    ".json": "application/json",
+    ".webmanifest": "application/manifest+json"
+  }
+}

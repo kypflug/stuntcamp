@@ -1,0 +1,21 @@
+{
+  "$schema": "../schema.json",
+  "slug": "aethercalc",
+  "name": "aethercalc",
+  "tagline": "A calculator built from HTML forms and CSS arithmetic. No JavaScript.",
+  "note": "Radio buttons set custom properties, :has() picks the calc(), and CSS counters print the answer. Division answers exactly and hands back a remainder.",
+  "type": "source-build",
+  "author": { "name": "kypflug", "url": "https://github.com/kypflug" },
+  "source": "https://github.com/kypflug/aethercalc",
+  "build": {
+    "repo": "kypflug/aethercalc",
+    "ref": "99c16c7637189a951f4d284eaa7de58a1cd0f2af",
+    "command": "npm run build",
+    "output": "."
+  },
+  "tags": ["css", "no-js", "toy"],
+  "accent": "#4fc3f7",
+  "thumbnail": null,
+  "added": "2026-07-25",
+  "visible": true
+}

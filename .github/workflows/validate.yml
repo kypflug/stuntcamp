@@ -1,0 +1,56 @@
+name: validate
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+# Deliberately no secrets and a read-only token: this workflow runs contributor
+# build scripts from forks, so it must never be able to publish anything.
+permissions:
+  contents: read
+
+concurrency:
+  group: validate-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Validate registry
+        run: node scripts/validate-registry.mjs
+
+      - name: Build hub index
+        run: node hub/build.mjs
+
+      - name: Build apps (strict)
+        run: node scripts/build-apps.mjs --strict
+
+      - name: Build routing table
+        run: node scripts/build-routes.mjs
+
+      - name: Summarise
+        if: always()
+        run: |
+          {
+            echo '### stuntcamp build'
+            echo
+            echo '| app | type | result |'
+            echo '| --- | --- | --- |'
+            node -e '
+              const r = require("./dist/build-report.json");
+              for (const a of r) console.log(`| ${a.slug} | ${a.type} | ${a.ok ? `ok (${a.files} files)` : "**failed** — " + a.error.split("\n")[0]} |`);
+            '
+          } >> "$GITHUB_STEP_SUMMARY"

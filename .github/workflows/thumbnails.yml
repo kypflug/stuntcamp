@@ -1,0 +1,58 @@
+name: thumbnails
+
+on:
+  workflow_run:
+    workflows: [deploy]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: thumbnails
+  cancel-in-progress: true
+
+jobs:
+  shots:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Playwright
+        run: |
+          npm install --no-audit --no-fund
+          npx playwright install --with-deps chromium
+
+      - name: Wait for the deploy to propagate
+        run: sleep 45
+
+      - name: Capture thumbnails
+        run: node scripts/screenshot.mjs
+
+      - name: Commit and redeploy if anything changed
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name 'stuntcamp-bot'
+          git config user.email 'stuntcamp-bot@users.noreply.github.com'
+          git add hub/assets/thumbs
+          if git diff --cached --quiet; then
+            echo 'no thumbnail changes'
+            exit 0
+          fi
+          git commit -m 'chore: refresh thumbnails'
+          git push
+          # Pushes made with GITHUB_TOKEN do not trigger workflows, so ask for
+          # the deploy explicitly. The loop terminates because the next shots
+          # run finds no changes to commit.
+          gh workflow run deploy.yml --ref main

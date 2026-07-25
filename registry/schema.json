@@ -1,0 +1,122 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://stuntcamp.app/schema.json",
+  "title": "stuntcamp app manifest",
+  "type": "object",
+  "required": ["slug", "name", "tagline", "type"],
+  "additionalProperties": false,
+  "properties": {
+    "slug": {
+      "type": "string",
+      "description": "Single DNS label. Becomes <slug>.stuntcamp.app.",
+      "pattern": "^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 60
+    },
+    "tagline": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160,
+      "description": "One line. Shown under the name on the index."
+    },
+    "type": {
+      "enum": ["in-repo", "source-build", "artifact", "redirect", "proxy", "link"]
+    },
+    "author": {
+      "type": "object",
+      "required": ["name"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "url": { "type": "string", "format": "uri" }
+      }
+    },
+    "source": {
+      "type": "string",
+      "format": "uri",
+      "description": "Public repo or project URL shown on the card."
+    },
+    "url": {
+      "type": "string",
+      "format": "uri",
+      "description": "Target for redirect/proxy/link types."
+    },
+    "build": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "repo": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$",
+          "description": "owner/name on GitHub. Required for source-build and artifact."
+        },
+        "ref": {
+          "type": "string",
+          "description": "Commit SHA (preferred), tag, or branch."
+        },
+        "install": { "type": "string" },
+        "command": { "type": "string" },
+        "output": {
+          "type": "string",
+          "description": "Directory containing the built site, relative to the repo root."
+        },
+        "artifact": {
+          "enum": ["release", "branch"],
+          "description": "artifact type only: where prebuilt output comes from."
+        },
+        "asset": {
+          "type": "string",
+          "description": "artifact/release only: release asset filename, e.g. dist.zip."
+        },
+        "branch": {
+          "type": "string",
+          "description": "artifact/branch only: branch holding prebuilt output, e.g. gh-pages."
+        },
+        "release": {
+          "type": "string",
+          "description": "artifact/release only: tag name or 'latest'."
+        }
+      }
+    },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string", "maxLength": 24 },
+      "maxItems": 6
+    },
+    "accent": {
+      "type": "string",
+      "pattern": "^#[0-9a-fA-F]{6}$"
+    },
+    "thumbnail": {
+      "type": ["string", "null"],
+      "description": "Path or URL overriding the auto-captured screenshot. null = auto."
+    },
+    "added": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "visible": { "type": "boolean" },
+    "note": {
+      "type": "string",
+      "maxLength": 240,
+      "description": "Optional longer blurb shown on the card."
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "type": { "const": "source-build" } }, "required": ["type"] },
+      "then": { "required": ["build"] }
+    },
+    {
+      "if": { "properties": { "type": { "const": "artifact" } }, "required": ["type"] },
+      "then": { "required": ["build"] }
+    },
+    {
+      "if": { "properties": { "type": { "enum": ["redirect", "proxy", "link"] } }, "required": ["type"] },
+      "then": { "required": ["url"] }
+    }
+  ]
+}
