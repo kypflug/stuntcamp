@@ -117,7 +117,7 @@ with no subdomain at all.
 | `build` | for source-build/artifact | See above. |
 | `tags` | no | Up to 6 short strings. |
 | `accent` | no | `#rrggbb`. Tints the card. |
-| `thumbnail` | no | Path or URL. Leave it out and we screenshot the live app. |
+| `thumbnail` | no | Path/URL, or `{ "light", "dark" }`. Leave it out and we screenshot the live app. |
 | `added` | no | `YYYY-MM-DD`. |
 | `visible` | no | Set `false` to keep it in the registry but off the index. |
 
@@ -133,8 +133,24 @@ visitor's theme.
 If your app ignores `prefers-color-scheme`, both captures come out identical
 and the redundant dark copy is dropped automatically — no action needed.
 
-Set `thumbnail` only if you want something hand-made; a single image is then
-used for both themes.
+Set `thumbnail` only if you want something hand-made. Setting it also opts your
+app out of the capture job entirely, so nothing overwrites your image.
+
+```jsonc
+// one image, used for both themes
+"thumbnail": "assets/shots/my-thing.jpg"
+
+// or a pair, swapped with <picture> exactly like the captured ones
+"thumbnail": { "light": "assets/shots/my-thing.jpg", "dark": "assets/shots/my-thing-dark.jpg" }
+```
+
+`light` is required in the object form; `dark` is optional and falls back to
+`light`. Paths are relative to the site root, so commit the files somewhere
+under `hub/assets/` — anything in there is copied to `dist/assets/`.
+
+A hand-made pair is the answer when the automatic capture can't reach the view
+worth showing: an app that requires sign-in, for example, will otherwise be
+advertised by its login form.
 
 ## What CI does to your PR
 

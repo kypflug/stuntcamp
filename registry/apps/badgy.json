@@ -8,7 +8,10 @@
   "url": "https://badgy.tech",
   "tags": ["calendar", "pwa", "rto"],
   "accent": "#e0a33c",
-  "thumbnail": null,
+  "thumbnail": {
+    "light": "assets/shots/badgy.jpg",
+    "dark": "assets/shots/badgy-dark.jpg"
+  },
   "added": "2026-07-25",
   "visible": true
 }
