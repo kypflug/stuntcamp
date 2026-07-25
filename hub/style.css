@@ -5,7 +5,6 @@
   color-scheme: light dark;
 
   --bg: #e4ebe7;
-  --bg-alt: #d8e2dc;
   --card: #f8faf9;
   --line: #c2d1c8;
   --line-2: #aec2b6;
@@ -15,23 +14,21 @@
   --link: #2a7d8a;
   --link-hover: #1d5a65;
   --primary: #4a7a6a;
-  --tag-bg: #c6d8ce;
-  --tag-ink: #2d4a3a;
   --shadow: rgba(35, 64, 48, .14);
 
   /* Two soft washes behind the page, echoing the blog's watercolor hero. */
   --wash-1: #d2e3da;
   --wash-2: #cfe0e5;
 
-  /* Per-app accent tinting. Light needs a lighter hand or the cards go muddy. */
-  --tint: 5%;
+  /* Per-app accent tinting. Card colour is derived entirely from the app's own
+     accent; --accent-shift is what accents are pulled toward for legibility. */
+  --tint: 9%;
+  --tag-mix: 24%;
+  --accent-shift: #10241f;
   --shot-base: #eef4f0;
   --glyph-mix: #24413a;
 
   --mark-grad: linear-gradient(100deg, #4a7a6a, #2a7d8a 45%, #3d5a65);
-  --ridge-back: #b7d0c6;
-  --ridge-mid: #93b8aa;
-  --ridge-front: #6e9b8c;
 
   --radius: 14px;
   --mono: ui-monospace, SFMono-Regular, "Cascadia Mono", Menlo, Consolas, monospace;
@@ -41,7 +38,6 @@
 @media (prefers-color-scheme: dark) {
   :root {
     --bg: #0d1516;
-    --bg-alt: #131f21;
     --card: #142224;
     --line: #1e3235;
     --line-2: #2b464a;
@@ -51,21 +47,18 @@
     --link: #5abbc9;
     --link-hover: #7dd0dc;
     --primary: #7ab3a0;
-    --tag-bg: #192e30;
-    --tag-ink: #a0c8b8;
     --shadow: rgba(0, 0, 0, .5);
 
     --wash-1: #16292b;
     --wash-2: #142a30;
 
-    --tint: 9%;
+    --tint: 14%;
+    --tag-mix: 20%;
+    --accent-shift: #f4fbf8;
     --shot-base: #0e1a1c;
     --glyph-mix: #e8f2ee;
 
     --mark-grad: linear-gradient(100deg, #7ab3a0, #5abbc9 45%, #8ec4b2);
-    --ridge-back: #1f3b3e;
-    --ridge-mid: #2a5052;
-    --ridge-front: #37675e;
   }
 }
 
@@ -106,30 +99,18 @@ header { margin-bottom: clamp(2rem, 5vw, 3.25rem); }
   color: transparent;
 }
 
-/* A mountain range rises behind "camp". The ridges are absolutely positioned
-   and the word is relatively positioned, so the letterforms paint on top
-   without needing a negative z-index. */
-.camp { position: relative; display: inline-block; }
-
-.camp i {
-  position: relative;
+/* "camp" is a window onto a mountain scene: the ridges are a background image
+   clipped to the letterforms. Peaks sit inside the x-height band so they land
+   where the glyphs actually are. The scene itself is generated in build.mjs and
+   injected as a rule in the document head, one per colour scheme. */
+.camp {
   font-style: normal;
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
-
-/* Peaks rise above the cap height and the bases dissolve, so the range reads as
-   a watercolor backdrop rather than a filled box behind the word. Insets are in
-   em so it tracks the clamped wordmark size. */
-.range {
-  position: absolute;
-  inset: -.42em -.04em .02em 0;
-  pointer-events: none;
-  -webkit-mask-image: linear-gradient(to bottom, #000 54%, rgba(0, 0, 0, .55) 80%, transparent 100%);
-  mask-image: linear-gradient(to bottom, #000 54%, rgba(0, 0, 0, .55) 80%, transparent 100%);
-}
-
-.range .r1 { fill: var(--ridge-back); }
-.range .r2 { fill: var(--ridge-mid); }
-.range .r3 { fill: var(--ridge-front); }
 
 /* ---- lede ---- */
 
@@ -148,13 +129,21 @@ header { margin-bottom: clamp(2rem, 5vw, 3.25rem); }
   gap: 1.15rem;
 }
 
+/* Everything inside a card is derived from that card's own accent rather than
+   the page palette, so each app keeps its own identity. */
 .card {
-  --accent: var(--primary);
+  --accent: #8aa4c8;
+  --accent-ink: color-mix(in srgb, var(--accent) 62%, var(--accent-shift));
+  --accent-hot: color-mix(in srgb, var(--accent) 82%, var(--accent-shift));
+  --accent-soft: color-mix(in srgb, var(--accent) var(--tag-mix), var(--card));
+  --accent-line: color-mix(in srgb, var(--accent) 28%, var(--line));
+  --accent-body: color-mix(in srgb, var(--accent) 16%, var(--dim));
+  --accent-faint: color-mix(in srgb, var(--accent) 14%, var(--dimmer));
   position: relative;
   display: flex;
   flex-direction: column;
   background: linear-gradient(180deg, color-mix(in srgb, var(--accent) var(--tint), var(--card)), var(--card));
-  border: 1px solid var(--line);
+  border: 1px solid var(--accent-line);
   border-radius: var(--radius);
   overflow: hidden;
   transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
@@ -163,14 +152,14 @@ header { margin-bottom: clamp(2rem, 5vw, 3.25rem); }
 .card:hover,
 .card:focus-within {
   transform: translateY(-3px);
-  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
-  box-shadow: 0 18px 40px -22px color-mix(in srgb, var(--accent) 45%, var(--shadow));
+  border-color: color-mix(in srgb, var(--accent) 60%, transparent);
+  box-shadow: 0 18px 40px -22px color-mix(in srgb, var(--accent) 55%, var(--shadow));
 }
 
 .shot {
   position: relative;
   aspect-ratio: 16 / 10;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--accent-line);
   overflow: hidden;
   background: linear-gradient(140deg,
     color-mix(in srgb, var(--accent) 30%, var(--shot-base)),
@@ -202,7 +191,7 @@ header { margin-bottom: clamp(2rem, 5vw, 3.25rem); }
 .body h2 { margin: 0; font-size: 1.15rem; letter-spacing: -.02em; }
 
 .body h2 a {
-  color: var(--ink);
+  color: var(--accent-ink);
   text-decoration: none;
 }
 
@@ -213,9 +202,9 @@ header { margin-bottom: clamp(2rem, 5vw, 3.25rem); }
   z-index: 1;
 }
 
-.card:hover h2 a { color: var(--link-hover); }
+.card:hover h2 a { color: var(--accent-hot); }
 
-.tagline { margin: 0; color: var(--dim); font-size: .92rem; }
+.tagline { margin: 0; color: var(--accent-body); font-size: .92rem; }
 
 .tags {
   margin: .15rem 0 0;
@@ -230,30 +219,30 @@ header { margin-bottom: clamp(2rem, 5vw, 3.25rem); }
 .tags li {
   padding: .3rem .5rem;
   border-radius: 6px;
-  background: var(--tag-bg);
-  color: var(--tag-ink);
+  background: var(--accent-soft);
+  color: var(--accent-ink);
 }
 
 .meta {
   margin-top: auto;
   padding-top: .7rem;
-  border-top: 1px solid var(--line);
+  border-top: 1px solid var(--accent-line);
   display: flex;
   align-items: center;
   gap: .5rem;
   font: .72rem/1.4 var(--mono);
-  color: var(--dimmer);
+  color: var(--accent-faint);
 }
 
 .meta a {
   position: relative;
   z-index: 2;
-  color: var(--link);
+  color: var(--accent-ink);
   text-decoration: none;
-  border-bottom: 1px solid color-mix(in srgb, var(--link) 40%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
 }
 
-.meta a:hover { color: var(--link-hover); }
+.meta a:hover { color: var(--accent-hot); }
 
 /* ---- empty + footer ---- */
 

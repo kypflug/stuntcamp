@@ -19,16 +19,36 @@ const esc = (s) => String(s ?? '')
   .replace(/"/g, '&quot;');
 
 /**
- * A mountain range for the wordmark to sit in front of, echoing the watercolor
- * hero on aldenblog.io. Three ridges, back to front, coloured from CSS custom
- * properties so it follows the light/dark theme. The bases are faded out by a
- * mask in the stylesheet, so the ridges read as peaks rather than as a block.
+ * The mountain scene that shows through the "camp" letterforms: a sky gradient
+ * with three ridges. Peaks are placed low in the viewBox so they fall inside
+ * the x-height band, which is the only part of the word wide enough to read.
+ * Emitted as a data URI so it costs no extra request.
  */
-const RANGE = `<svg class="range" viewBox="0 0 180 96" preserveAspectRatio="none" aria-hidden="true" focusable="false">
-<path class="r1" d="M0 96 16 22l18 20L56 10l22 28 18-20 24 26 20-24 22 28 20 28z"/>
-<path class="r2" d="M0 96 20 44l22 16 22-28 24 24 22-16 24 22 24-18 22 52z"/>
-<path class="r3" d="M0 96 24 60l24 16 24-18 24 16 26-14 24 18 22-16 12 34z"/>
-</svg>`;
+function scene({ sky1, sky2, r1, r2, r3 }) {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 96" preserveAspectRatio="none">`
+    + `<defs><linearGradient id="s" x1="0" y1="0" x2="0" y2="1">`
+    + `<stop offset="0" stop-color="${sky1}"/><stop offset="1" stop-color="${sky2}"/>`
+    + `</linearGradient></defs>`
+    + `<rect width="180" height="96" fill="url(#s)"/>`
+    + `<path fill="${r1}" d="M0 96V54l34-26 40 36 38-38 38 32 30-20v52z"/>`
+    + `<path fill="${r2}" d="M0 96V66l24-8 34 20 38-26 38 24 34-18 12 8v30z"/>`
+    + `<path fill="${r3}" d="M0 96V82l40-8 40 14 40-18 38 16 22-8v18z"/>`
+    + `</svg>`;
+  return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
+}
+
+const SCENE_LIGHT = scene({
+  sky1: '#8fd0d8', sky2: '#3f8b98', r1: '#2b7278', r2: '#1a5349', r3: '#0d2a21',
+});
+
+const SCENE_DARK = scene({
+  sky1: '#cbf1f6', sky2: '#7ed3de', r1: '#8ad2c5', r2: '#57a89a', r3: '#317264',
+});
+
+const WORDMARK_STYLE = `<style>
+.camp{background-image:${SCENE_LIGHT}}
+@media (prefers-color-scheme:dark){.camp{background-image:${SCENE_DARK}}}
+</style>`;
 
 /**
  * Auto-captured screenshots land in hub/assets/thumbs/ as a light/dark pair,
@@ -108,11 +128,12 @@ function page({ site, apps }) {
 <meta property="og:url" content="https://${esc(site.domain)}/">
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="assets/style.css">
+${WORDMARK_STYLE}
 </head>
 <body>
 <div class="wrap">
 <header>
-  <h1 class="mark"><em>stunt</em><span class="camp">${RANGE}<i>camp</i></span></h1>
+  <h1 class="mark"><em>stunt</em><i class="camp">camp</i></h1>
   <p class="lede">${esc(site.blurb)}</p>
 </header>
 <main>
