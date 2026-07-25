@@ -2,6 +2,8 @@ name = "stuntcamp-router"
 main = "src/index.js"
 compatibility_date = "2025-01-01"
 workers_dev = false
+# Set explicitly so a zone-scoped API token never has to enumerate memberships.
+account_id = "d21847b290ef4e6c41919466ffe2455c"
 
 [vars]
 DOMAIN = "stuntcamp.app"
