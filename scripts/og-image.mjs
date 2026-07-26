@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 /**
- * Renders the social preview card to hub/assets/og.png.
+ * Renders the social preview card to hub/assets/og.jpg.
  *
  *   npm run build && node scripts/og-image.mjs
  *
  * The wordmark scene is lifted straight out of the built index.html rather than
  * redefined here, so the card can never drift from what the site actually shows.
  * Playwright is CI-only, exactly like scripts/screenshot.mjs — the hub build
- * itself stays dependency-free and simply copies whatever PNG is committed.
+ * itself stays dependency-free and simply copies whatever image is committed.
  */
 import { readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';

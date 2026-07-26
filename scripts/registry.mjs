@@ -1,4 +1,5 @@
 import { readdirSync, readFileSync, existsSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { join, dirname, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -6,6 +7,18 @@ export const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 export const REGISTRY_DIR = join(ROOT, 'registry');
 export const APPS_DIR = join(REGISTRY_DIR, 'apps');
 export const DIST = join(ROOT, 'dist');
+
+/**
+ * The hub stylesheet ships under a content-hashed filename, so a design change
+ * can never be served against a cached copy of the previous one. Every page
+ * that links it has to agree on that name — the index, the 404, and the
+ * "between takes" placeholder — so it is derived in one place.
+ */
+export function stylesheet() {
+  const css = readFileSync(join(ROOT, 'hub', 'style.css'));
+  const name = `style.${createHash('sha256').update(css).digest('hex').slice(0, 8)}.css`;
+  return { css, name };
+}
 
 export const HOSTED_TYPES = ['in-repo', 'source-build', 'artifact'];
 export const ALL_TYPES = [...HOSTED_TYPES, 'redirect', 'proxy', 'link'];
@@ -52,18 +65,22 @@ const SHA_RE = /^[0-9a-f]{40}$/;
 /**
  * Card text colour is derived from the app's own accent, which means contrast
  * would otherwise be decided by whichever hex a contributor happened to like.
- * These mirror the ramp in hub/style.css: a card's title and tag chips are
- * `--accent-ink`, the accent mixed --ink-mix of the way from --accent-shift,
- * sitting on --card and on the --tag-mix chip fill respectively. Keep the two
- * files in step; the numbers are duplicated rather than parsed so the hub build
- * stays dependency-free.
+ * These mirror the ramp in hub/style.css: a card's title and its destination
+ * chip are `--accent-ink`, the accent mixed --ink-mix of the way from
+ * --accent-shift, sitting on --card and on the --chip-mix chip fill
+ * respectively. Keep the two files in step; the numbers are duplicated rather
+ * than parsed so the hub build stays dependency-free.
+ *
+ * This is the pre-OKLCH fallback only. Engines with relative colour syntax
+ * clamp lightness instead, which is legible for any hex — so a failure here is
+ * worth a warning, never an error.
  */
 const THEMES = [
-  { name: 'light', card: '#f8faf9', shift: '#10241f', inkMix: 0.45, tagMix: 0.24 },
-  { name: 'dark', card: '#142224', shift: '#f4fbf8', inkMix: 0.62, tagMix: 0.20 },
+  { name: 'light', card: '#f8faf9', shift: '#10241f', inkMix: 0.45, chipMix: 0.24, deeper: true },
+  { name: 'dark', card: '#142224', shift: '#f4fbf8', inkMix: 0.62, chipMix: 0.20, deeper: false },
 ];
 
-/** WCAG AA for normal-size text. Titles are 1.15rem, chips .68rem. */
+/** WCAG AA for normal-size text. Titles are 1.15rem, the chip .68rem. */
 const AA_NORMAL = 4.5;
 
 const toRgb = (h) => [
@@ -92,7 +109,9 @@ export function contrastRatio(a, b) {
 
 /**
  * Returns a list of human-readable contrast problems for an accent, or an empty
- * array when the accent is legible everywhere the card uses it.
+ * array when the accent is legible everywhere the card uses it. Each problem
+ * carries its own remedy, because the direction differs by theme: a light card
+ * needs a deeper accent, a dark one needs a lighter accent.
  */
 export function accentContrastIssues(accent) {
   if (!HEX_RE.test(accent || '')) return [];
@@ -102,16 +121,17 @@ export function accentContrastIssues(accent) {
   for (const t of THEMES) {
     const card = toRgb(t.card);
     const ink = mixSrgb(rgb, t.inkMix, toRgb(t.shift));
-    const chip = mixSrgb(rgb, t.tagMix, card);
+    const chip = mixSrgb(rgb, t.chipMix, card);
+    const remedy = t.deeper ? 'use a deeper shade' : 'use a lighter shade';
 
     const onCard = contrastRatio(ink, card);
     const onChip = contrastRatio(ink, chip);
 
     if (onCard < AA_NORMAL) {
-      issues.push(`${t.name} card title is ${onCard.toFixed(2)}:1 (needs ${AA_NORMAL}:1)`);
+      issues.push(`${t.name} card title is ${onCard.toFixed(2)}:1, needs ${AA_NORMAL}:1 — ${remedy}`);
     }
     if (onChip < AA_NORMAL) {
-      issues.push(`${t.name} tag chips are ${onChip.toFixed(2)}:1 (needs ${AA_NORMAL}:1)`);
+      issues.push(`${t.name} destination chip is ${onChip.toFixed(2)}:1, needs ${AA_NORMAL}:1 — ${remedy}`);
     }
   }
 
@@ -188,7 +208,7 @@ export function validateApp(app, site, seenSlugs = new Set()) {
     err('accent must be a #rrggbb hex colour');
   } else if (app.accent != null) {
     for (const issue of accentContrastIssues(app.accent)) {
-      warn(`accent ${app.accent}: ${issue} — pick a deeper shade or the card will be hard to read`);
+      warn(`accent ${app.accent}: ${issue} (affects only engines without OKLCH relative colour)`);
     }
   }
   if (app.added != null && !DATE_RE.test(app.added)) err('added must be YYYY-MM-DD');

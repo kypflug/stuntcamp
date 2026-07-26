@@ -44,7 +44,7 @@
      is always the higher-contrast one. --hot-mix is therefore below --ink-mix,
      so hovering a title makes it easier to read rather than harder. */
   --tint: 9%;
-  --tag-mix: 24%;
+  --chip-mix: 24%;
   --accent-shift: #10241f;
   --ink-mix: 45%;
   --hot-mix: 30%;
@@ -76,7 +76,7 @@
     --wash-2: #142a30;
 
     --tint: 14%;
-    --tag-mix: 20%;
+    --chip-mix: 20%;
     --accent-shift: #f4fbf8;
     --ink-mix: 62%;
     --hot-mix: 45%;
@@ -197,7 +197,7 @@ header {
   --accent: #8aa4c8;
   --accent-ink: color-mix(in srgb, var(--accent) var(--ink-mix), var(--accent-shift));
   --accent-hot: color-mix(in srgb, var(--accent) var(--hot-mix), var(--accent-shift));
-  --accent-soft: color-mix(in srgb, var(--accent) var(--tag-mix), var(--card));
+  --accent-soft: color-mix(in srgb, var(--accent) var(--chip-mix), var(--card));
   --accent-line: color-mix(in srgb, var(--accent) 28%, var(--line));
   --accent-body: color-mix(in srgb, var(--accent) 16%, var(--dim));
   --accent-faint: color-mix(in srgb, var(--accent) 14%, var(--dimmer));
