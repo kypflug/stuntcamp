@@ -22,7 +22,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: main
+          ref: ${{ github.event.repository.default_branch }}
 
       - uses: actions/setup-node@v4
         with:
@@ -43,6 +43,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           BRANCH: bot/thumbnails-${{ github.run_id }}
+          BASE: ${{ github.event.repository.default_branch }}
         run: |
           set -euo pipefail
           git config user.name 'stuntcamp-bot'
@@ -53,18 +54,18 @@ jobs:
             exit 0
           fi
 
-          # main requires changes to arrive through a pull request, and
-          # GITHUB_TOKEN cannot bypass that: Integration bypass actors are only
-          # available to organisation-owned repositories, and this one belongs
-          # to a user. So the bot raises a pull request and merges it. The
-          # ruleset only targets the default branch, so pushing the topic
-          # branch is unaffected.
+          # The default branch requires changes to arrive through a pull
+          # request, and GITHUB_TOKEN cannot bypass that: bypass actors of type
+          # Integration are only available to organisation-owned repositories,
+          # and this one belongs to a user. So the bot raises a pull request and
+          # merges it. The ruleset targets only the default branch, so pushing
+          # the topic branch is unaffected.
           git switch -c "$BRANCH"
           git commit -m 'chore: refresh thumbnails'
           git push origin "$BRANCH"
 
           gh pr create \
-            --base main \
+            --base "$BASE" \
             --head "$BRANCH" \
             --title 'chore: refresh thumbnails' \
             --body 'Automated capture from the post-deploy thumbnail job.'
