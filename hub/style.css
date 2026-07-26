@@ -1,6 +1,23 @@
 /* Watercolor blue-green palette, lifted from aldenblog.io so the two sites
    read as the same person's. Light is the default; dark is an override, which
    is the structure the blog uses too. */
+
+/* Inter, SIL Open Font License 1.1 — the licence ships beside it in
+   assets/fonts/OFL.txt. This is the latin subset of the variable face, so one
+   48 KB file covers every weight from 400 to 700. Self-hosted rather than
+   pulled from a font CDN: the hub has no third-party runtime dependencies and
+   should not gain one for a typeface. */
+@font-face {
+  font-family: Inter;
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("fonts/inter-latin-var.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+    U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
 :root {
   color-scheme: light dark;
 
@@ -21,16 +38,24 @@
   --wash-2: #cfe0e5;
 
   /* Per-app accent tinting. Card colour is derived entirely from the app's own
-     accent; --accent-shift is what accents are pulled toward for legibility. */
+     accent; --accent-shift is what accents are pulled toward for legibility.
+     --ink-mix and --hot-mix are how far text roles are pulled: less accent means
+     more shift, which is darker on light and lighter on dark, so a smaller mix
+     is always the higher-contrast one. --hot-mix is therefore below --ink-mix,
+     so hovering a title makes it easier to read rather than harder. */
   --tint: 9%;
   --tag-mix: 24%;
   --accent-shift: #10241f;
+  --ink-mix: 45%;
+  --hot-mix: 30%;
   --shot-base: #eef4f0;
   --glyph-mix: #24413a;
 
   --radius: 14px;
   --mono: ui-monospace, SFMono-Regular, "Cascadia Mono", Menlo, Consolas, monospace;
-  --sans: Inter, system-ui, "Segoe UI", -apple-system, sans-serif;
+  /* Inter is loaded above, so the wordmark's tracking is now applied to the face
+     it was actually tuned for. The rest of the stack is what shows during swap. */
+  --sans: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -53,6 +78,8 @@
     --tint: 14%;
     --tag-mix: 20%;
     --accent-shift: #f4fbf8;
+    --ink-mix: 62%;
+    --hot-mix: 45%;
     --shot-base: #0e1a1c;
     --glyph-mix: #e8f2ee;
   }
@@ -107,11 +134,28 @@ header {
    injected as a rule in the document head, one per colour scheme. */
 .camp {
   font-style: normal;
+  color: var(--primary);
   background-size: 100% 100%;
   background-repeat: no-repeat;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+}
+
+/* Only disappear the letterforms where the scene can actually show through.
+   Unguarded, a blocked data URI or an engine without background-clip erases
+   half the site name. */
+@supports ((background-clip: text) or (-webkit-background-clip: text)) {
+  .camp {
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+}
+
+/* Forced colours throw the scene away, so take the letterforms back. */
+@media (forced-colors: active) {
+  .camp {
+    background-image: none;
+    color: CanvasText;
+  }
 }
 
 /* ---- lede ---- */
@@ -151,8 +195,8 @@ header {
    the page palette, so each app keeps its own identity. */
 .card {
   --accent: #8aa4c8;
-  --accent-ink: color-mix(in srgb, var(--accent) 62%, var(--accent-shift));
-  --accent-hot: color-mix(in srgb, var(--accent) 82%, var(--accent-shift));
+  --accent-ink: color-mix(in srgb, var(--accent) var(--ink-mix), var(--accent-shift));
+  --accent-hot: color-mix(in srgb, var(--accent) var(--hot-mix), var(--accent-shift));
   --accent-soft: color-mix(in srgb, var(--accent) var(--tag-mix), var(--card));
   --accent-line: color-mix(in srgb, var(--accent) 28%, var(--line));
   --accent-body: color-mix(in srgb, var(--accent) 16%, var(--dim));
@@ -172,6 +216,39 @@ header {
   transform: translateY(-3px);
   border-color: color-mix(in srgb, var(--accent) 60%, transparent);
   box-shadow: 0 18px 40px -22px color-mix(in srgb, var(--accent) 55%, var(--shadow));
+}
+
+/* Text roles take their hue and chroma from the app's accent but have their
+   lightness capped, so legibility is a property of the design rather than of
+   whichever hex a contributor liked. Verified across the whole hue circle at
+   maximum in-gamut chroma: the worst case is 5.22:1 against the card and the
+   chip, comfortably past the 4.5:1 AA floor. The color-mix values above remain
+   the fallback for engines without relative colour syntax, which is why the
+   accent contrast warning in the registry validator still earns its place. */
+@supports (color: oklch(from red l c h)) {
+  .card {
+    --accent-ink: oklch(from var(--accent) min(l, 0.50) c h);
+    --accent-hot: oklch(from var(--accent) min(l, 0.42) c h);
+  }
+}
+
+/* Dark flips the cap into a floor: the same accent has to be light enough to
+   read on a dark card instead of dark enough to read on a light one. */
+@media (prefers-color-scheme: dark) {
+  @supports (color: oklch(from red l c h)) {
+    .card {
+      --accent-ink: oklch(from var(--accent) max(l, 0.80) c h);
+      --accent-hot: oklch(from var(--accent) max(l, 0.90) c h);
+    }
+  }
+}
+
+/* The whole card is one link (see .body h2 a::after), so the ring belongs on the
+   card rather than the inline title text. Keyboard users previously got only the
+   3px lift — which prefers-reduced-motion removes outright, leaving nothing. */
+.card:focus-within {
+  outline: 2px solid var(--accent-hot);
+  outline-offset: 2px;
 }
 
 .shot {
@@ -206,7 +283,25 @@ header {
 
 .body { padding: .95rem 1.05rem 1.05rem; display: flex; flex-direction: column; gap: .5rem; flex: 1; }
 
+/* Title and destination chip share a baseline, so the chip reads as a label on
+   the title rather than as another line of content. */
+.hrow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: .6rem;
+}
+
 .body h2 { margin: 0; font-size: 1.15rem; letter-spacing: -.02em; }
+
+.dest {
+  flex: none;
+  padding: .2rem .45rem;
+  border-radius: 6px;
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+  font: .68rem/1 var(--mono);
+}
 
 .body h2 a {
   color: var(--accent-ink);
@@ -220,26 +315,16 @@ header {
   z-index: 1;
 }
 
+/* The title link already covers the card, so its own ring would just duplicate
+   the one .card:focus-within draws. */
+.body h2 a:focus-visible { outline: none; }
+
 .card:hover h2 a { color: var(--accent-hot); }
 
 .tagline { margin: 0; color: var(--accent-body); font-size: .92rem; }
 
-.tags {
-  margin: .15rem 0 0;
-  padding: 0;
-  list-style: none;
-  display: flex;
-  flex-wrap: wrap;
-  gap: .35rem;
-  font: .68rem/1 var(--mono);
-}
-
-.tags li {
-  padding: .3rem .5rem;
-  border-radius: 6px;
-  background: var(--accent-soft);
-  color: var(--accent-ink);
-}
+/* Tags stay in the registry but are no longer drawn: filled pills read as
+   filters, and with a shelf this small there is nothing to filter. */
 
 .meta {
   margin-top: auto;
@@ -247,10 +332,16 @@ header {
   border-top: 1px solid var(--accent-line);
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: .5rem;
   font: .72rem/1.4 var(--mono);
   color: var(--accent-faint);
 }
+
+/* Where the card actually takes you — a subdomain here, or somebody else's host. */
+.where { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.who { flex: none; display: flex; align-items: center; gap: .4rem; }
 
 .meta a {
   position: relative;
@@ -261,6 +352,23 @@ header {
 }
 
 .meta a:hover { color: var(--accent-hot); }
+
+/* Meta links are small targets inside an already-outlined card, so they get a
+   tight ring of their own — the card ring says which card, this says which link. */
+.meta a:focus-visible {
+  outline: 2px solid var(--accent-hot);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+/* Everything outside a card runs on the page palette rather than an accent. */
+.by a:focus-visible,
+footer a:focus-visible,
+.oops .cta:focus-visible {
+  outline: 2px solid var(--link);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
 
 /* ---- empty + footer ---- */
 

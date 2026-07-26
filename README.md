@@ -45,11 +45,13 @@ registry/site.json          domain, blurb, reserved slugs
 registry/schema.json        JSON Schema for editor autocomplete
 hub/build.mjs               registry -> dist/index.html
 hub/style.css               the whole design
+hub/assets/fonts/           self-hosted Inter subset (SIL OFL, licence alongside)
 apps/<slug>/                source for in-repo apps
 scripts/registry.mjs        shared loader + validator
 scripts/build-apps.mjs      manifests -> dist/a/<slug>/
 scripts/build-routes.mjs    manifests -> worker/routes.json
 scripts/screenshot.mjs      Playwright thumbnails
+scripts/og-image.mjs        Playwright social card -> hub/assets/og.png
 scripts/serve.mjs           local preview with subdomain routing
 worker/                     Cloudflare Worker + wrangler config
 infra/main.bicep            resource group + Static Web App
@@ -63,6 +65,7 @@ npm run build        # hub + apps + routing table -> dist/
 npm run check        # same, but a failing app fails the run
 npm run serve        # preview at http://localhost:8787 and http://<slug>.localhost:8787
 npm run shots        # refresh thumbnails from the live site (needs playwright)
+npm run og          # regenerate the social card (needs playwright)
 ```
 
 `npm run build` needs nothing installed beyond Node 20+, git and curl. Only the

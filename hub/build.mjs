@@ -93,10 +93,39 @@ function findThumbs(app) {
   return { light: pick(''), dark: pick('-dark') };
 }
 
+/**
+ * What a card promises. The registry already knows whether an app is served
+ * from this Static Web App, redirects to somebody else's host, is proxied under
+ * our address, or is only a repo link — but the card used to keep that to
+ * itself, so an extension repo looked exactly like an app you could open.
+ */
+const DEST_LABELS = {
+  redirect: 'offsite',
+  proxy: 'proxied',
+  link: 'repo only',
+};
+
+function destination(app, site) {
+  const label = DEST_LABELS[app.type] || 'hosted here';
+  // redirect and link both hand the visitor to an address we do not control.
+  if (app.type === 'redirect' || app.type === 'link') {
+    let where = app.url;
+    try {
+      const u = new URL(app.url);
+      // Keep the path: "github.com" says far less than "github.com/kypflug/x",
+      // and .where ellipses anything too long for the card.
+      where = (u.host + u.pathname).replace(/\/$/, '');
+    } catch { /* validator already flagged it */ }
+    return { label, where: `\u2192 ${where}` };
+  }
+  return { label, where: `${app.slug}.${site.domain}` };
+}
+
 function card(app, site) {
   const href = publicUrl(app, site);
   const { light, dark } = findThumbs(app);
   const accent = app.accent || '#8aa4c8';
+  const dest = destination(app, site);
 
   let shot;
   if (light && dark) {
@@ -106,10 +135,6 @@ function card(app, site) {
   } else {
     shot = `<span class="glyph" aria-hidden="true">${esc(app.name.slice(0, 2))}</span>`;
   }
-
-  const tags = (app.tags || []).length
-    ? `<ul class="tags">${app.tags.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>`
-    : '';
 
   const author = app.author
     ? (app.author.url
@@ -121,13 +146,18 @@ function card(app, site) {
     ? ` &middot; <a href="${esc(app.source)}" rel="noopener">source</a>`
     : '';
 
+  // app.tags is deliberately not rendered: filled chips read as filters, and
+  // there is nothing to filter yet. The field stays in the registry for when
+  // the shelf is full enough that browsing by tag earns its place.
   return `<article class="card" style="--accent:${esc(accent)}">
   <div class="shot">${shot}</div>
   <div class="body">
-    <h2><a href="${esc(href)}">${esc(app.name)}</a></h2>
+    <div class="hrow">
+      <h2><a href="${esc(href)}">${esc(app.name)}</a></h2>
+      <span class="dest">${esc(dest.label)}</span>
+    </div>
     <p class="tagline">${esc(app.tagline)}</p>
-    ${tags}
-    <p class="meta">${author}${source}</p>
+    <p class="meta"><span class="where">${esc(dest.where)}</span><span class="who">${author}${source}</span></p>
   </div>
 </article>`;
 }
@@ -150,7 +180,14 @@ function page({ site, apps }) {
 <meta property="og:description" content="${esc(site.blurb)}">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://${esc(site.domain)}/">
+<meta property="og:image" content="https://${esc(site.domain)}/assets/og.jpg">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="${esc(site.title)} &mdash; ${esc(site.blurb)}">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="preload" href="assets/fonts/inter-latin-var.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="assets/style.css">
 ${WORDMARK_STYLE}
 </head>
@@ -186,6 +223,7 @@ function notFound(site) {
 <meta name="theme-color" content="#e4ebe7" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0d1516" media="(prefers-color-scheme: dark)">
 <link rel="icon" href="https://${esc(site.domain)}/assets/favicon.svg" type="image/svg+xml">
+<link rel="preload" href="https://${esc(site.domain)}/assets/fonts/inter-latin-var.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="https://${esc(site.domain)}/assets/style.css">
 </head>
 <body>

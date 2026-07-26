@@ -113,13 +113,39 @@ with no subdomain at all.
 | `type` | yes | One of the six above. |
 | `author` | no | `{ "name", "url" }`. Credits you on the card. |
 | `source` | no | Repo or project URL, linked from the card. |
-| `url` | for redirect/proxy/link | Where it actually lives. |
+| `url` | for redirect/proxy/link | Where it actually lives. Shown on the card as the destination. |
 | `build` | for source-build/artifact | See above. |
-| `tags` | no | Up to 6 short strings. |
-| `accent` | no | `#rrggbb`. Tints the card. |
+| `tags` | no | Up to 6 short strings. Stored, but not currently drawn on the card — see below. |
+| `accent` | no | `#rrggbb`. Tints the card. Any hue works; see below. |
 | `thumbnail` | no | Path/URL, or `{ "light", "dark" }`. Leave it out and we screenshot the live app. |
 | `added` | no | `YYYY-MM-DD`. |
 | `visible` | no | Set `false` to keep it in the registry but off the index. |
+
+## What the card shows
+
+The card names your app, its tagline, who wrote it, and — derived from `type`
+and `url` — where clicking it will actually take you:
+
+| `type` | Chip | Destination line |
+| --- | --- | --- |
+| `in-repo`, `source-build`, `artifact` | `hosted here` | `<slug>.stuntcamp.app` |
+| `proxy` | `proxied` | `<slug>.stuntcamp.app` |
+| `redirect` | `offsite` | the host you redirect to |
+| `link` | `repo only` | the host and path you link to |
+
+This is why `link` is worth using honestly: a browser extension or a CLI gets a
+card that says `repo only` instead of pretending to be a site you can open.
+
+`tags` are validated and kept in the registry but are not drawn on the card
+right now. Filled chips read as filters, and with a shelf this small there is
+nothing to filter — they'll come back if browsing by tag ever earns its place.
+Keep setting them.
+
+`accent` can be any `#rrggbb`. Card text takes its hue and chroma from your
+accent but has its lightness clamped, so a pale yellow and a deep navy are both
+legible. On engines without CSS relative colour syntax the older blend is used
+as a fallback, and `npm run validate` warns when an accent would fall below
+WCAG AA on that path — worth heeding, but never fatal.
 
 ## Thumbnails
 

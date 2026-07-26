@@ -13,6 +13,7 @@
     "check": "npm run validate && npm run build:hub && npm run build:apps -- --strict && npm run build:routes",
     "serve": "node scripts/serve.mjs",
     "shots": "node scripts/screenshot.mjs",
+    "og": "node scripts/og-image.mjs",
     "deploy:worker": "wrangler deploy --config worker/wrangler.toml"
   },
   "engines": {
