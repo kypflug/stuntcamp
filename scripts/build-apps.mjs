@@ -15,7 +15,7 @@
 import { execFileSync } from 'node:child_process';
 import { cpSync, existsSync, mkdirSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { join, resolve, relative, sep } from 'node:path';
-import { DIST, ROOT, isHosted, loadApps, loadSite, validateAll } from './registry.mjs';
+import { DIST, ROOT, isHosted, loadApps, loadSite, stylesheet, validateAll } from './registry.mjs';
 
 const STRICT = process.argv.includes('--strict');
 const ONLY = (() => {
@@ -164,13 +164,16 @@ function placeholder(app, message) {
   mkdirSync(dir, { recursive: true });
   // Absolute URL on purpose: this page is served from <slug>.stuntcamp.app,
   // where a root-relative /assets path routes back into the app, not the hub.
+  // The filename is content-hashed, so it has to come from the same helper the
+  // hub build uses rather than being written out by hand.
+  const { name: cssName } = stylesheet();
   writeFileSync(join(dir, 'index.html'), `<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${app.name} is between takes</title>
 <meta name="theme-color" content="#e4ebe7" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0d1516" media="(prefers-color-scheme: dark)">
-<link rel="stylesheet" href="https://stuntcamp.app/assets/style.css"></head>
+<link rel="stylesheet" href="https://stuntcamp.app/assets/${cssName}"></head>
 <body><div class="oops">
 <h1>between takes</h1>
 <p><code>${app.slug}</code> did not build on the last deploy.</p>

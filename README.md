@@ -51,7 +51,7 @@ scripts/registry.mjs        shared loader + validator
 scripts/build-apps.mjs      manifests -> dist/a/<slug>/
 scripts/build-routes.mjs    manifests -> worker/routes.json
 scripts/screenshot.mjs      Playwright thumbnails
-scripts/og-image.mjs        Playwright social card -> hub/assets/og.png
+scripts/og-image.mjs        Playwright social card -> hub/assets/og.jpg
 scripts/serve.mjs           local preview with subdomain routing
 worker/                     Cloudflare Worker + wrangler config
 infra/main.bicep            resource group + Static Web App

@@ -7,7 +7,7 @@
  */
 import { cpSync, existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { DIST, ROOT, loadApps, loadSite, publicUrl, validateAll } from '../scripts/registry.mjs';
+import { DIST, ROOT, loadApps, loadSite, publicUrl, stylesheet, validateAll } from '../scripts/registry.mjs';
 
 const HUB = join(ROOT, 'hub');
 const THUMBS = join(HUB, 'assets', 'thumbs');
@@ -162,7 +162,7 @@ function card(app, site) {
 </article>`;
 }
 
-function page({ site, apps }) {
+function page({ site, apps, cssHref }) {
   const body = apps.length
     ? `<div class="grid">\n${apps.map((a) => card(a, site)).join('\n')}\n</div>`
     : `<p class="empty">Nothing parked here yet.</p>`;
@@ -188,7 +188,7 @@ function page({ site, apps }) {
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="preload" href="assets/fonts/inter-latin-var.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="assets/style.css">
+<link rel="stylesheet" href="${esc(cssHref)}">
 ${WORDMARK_STYLE}
 </head>
 <body>
@@ -213,7 +213,7 @@ ${body}
 `;
 }
 
-function notFound(site) {
+function notFound(site, cssHref) {
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -224,7 +224,7 @@ function notFound(site) {
 <meta name="theme-color" content="#0d1516" media="(prefers-color-scheme: dark)">
 <link rel="icon" href="https://${esc(site.domain)}/assets/favicon.svg" type="image/svg+xml">
 <link rel="preload" href="https://${esc(site.domain)}/assets/fonts/inter-latin-var.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="https://${esc(site.domain)}/assets/style.css">
+<link rel="stylesheet" href="https://${esc(site.domain)}/${esc(cssHref)}">
 </head>
 <body>
 <div class="oops">
@@ -250,11 +250,18 @@ function main() {
 
   const apps = all.filter((a) => a.visible !== false);
 
+  // The stylesheet filename carries a hash of its own contents. Azure and
+  // Cloudflare both put a multi-hour max-age on a stable filename, so without
+  // this a returning visitor can be served today's markup against yesterday's
+  // CSS — new class names, old rules, a card that falls apart. A new hash is a
+  // new URL, so that pairing cannot happen.
+  const { css, name: cssName } = stylesheet();
+  const cssHref = `assets/${cssName}`;
   rmSync(join(DIST, 'index.html'), { force: true });
   mkdirSync(join(DIST, 'assets'), { recursive: true });
 
-  writeFileSync(join(DIST, 'index.html'), page({ site, apps }), 'utf8');
-  writeFileSync(join(DIST, '404.html'), notFound(site), 'utf8');
+  writeFileSync(join(DIST, 'index.html'), page({ site, apps, cssHref }), 'utf8');
+  writeFileSync(join(DIST, '404.html'), notFound(site, cssHref), 'utf8');
   writeFileSync(
     join(DIST, 'apps.json'),
     `${JSON.stringify(apps.map(({ _file, _basename, ...a }) => a), null, 2)}\n`,
@@ -265,10 +272,17 @@ function main() {
   if (existsSync(assets) && readdirSync(assets).length) {
     cpSync(assets, join(DIST, 'assets'), { recursive: true });
   }
-  cpSync(join(HUB, 'style.css'), join(DIST, 'assets', 'style.css'));
+  writeFileSync(join(DIST, 'assets', cssName), css);
+  // Drop fingerprinted stylesheets from earlier builds so a local dist does not
+  // silently accumulate them. CI always starts from an empty dist.
+  for (const f of readdirSync(join(DIST, 'assets'))) {
+    if (/^style\.[0-9a-f]{8}\.css$/.test(f) && f !== cssName) {
+      rmSync(join(DIST, 'assets', f), { force: true });
+    }
+  }
   cpSync(join(HUB, 'staticwebapp.config.json'), join(DIST, 'staticwebapp.config.json'));
 
-  console.log(`hub   ${apps.length} card(s) -> dist/index.html`);
+  console.log(`hub   ${apps.length} card(s) -> dist/index.html (${cssName})`);
 }
 
 main();
