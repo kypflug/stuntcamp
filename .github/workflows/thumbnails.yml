@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 concurrency:
   group: thumbnails
@@ -38,10 +39,12 @@ jobs:
       - name: Capture thumbnails
         run: node scripts/screenshot.mjs
 
-      - name: Commit any changes
+      - name: Open and merge a pull request with any changes
         env:
           GH_TOKEN: ${{ github.token }}
+          BRANCH: bot/thumbnails-${{ github.run_id }}
         run: |
+          set -euo pipefail
           git config user.name 'stuntcamp-bot'
           git config user.email 'stuntcamp-bot@users.noreply.github.com'
           git add hub/assets/thumbs
@@ -49,20 +52,43 @@ jobs:
             echo 'no thumbnail changes'
             exit 0
           fi
+
+          # main requires changes to arrive through a pull request, and
+          # GITHUB_TOKEN cannot bypass that: Integration bypass actors are only
+          # available to organisation-owned repositories, and this one belongs
+          # to a user. So the bot raises a pull request and merges it. The
+          # ruleset only targets the default branch, so pushing the topic
+          # branch is unaffected.
+          git switch -c "$BRANCH"
           git commit -m 'chore: refresh thumbnails'
-          # main may have moved while the screenshots were being taken.
-          for attempt in 1 2 3; do
-            if git push; then
-              pushed=1
+          git push origin "$BRANCH"
+
+          gh pr create \
+            --base main \
+            --head "$BRANCH" \
+            --title 'chore: refresh thumbnails' \
+            --body 'Automated capture from the post-deploy thumbnail job.'
+
+          # Copilot review is required on the default branch, so the merge can
+          # be refused for a few seconds until that review lands.
+          merged=''
+          for attempt in 1 2 3 4 5; do
+            if gh pr merge "$BRANCH" --squash --delete-branch; then
+              merged=1
               break
             fi
-            git pull --rebase --autostash origin main
+            echo "merge attempt $attempt was refused; waiting for required reviews to settle"
+            sleep 20
           done
-          if [ -z "${pushed:-}" ]; then
-            echo 'could not push thumbnails after 3 attempts'
-            exit 1
+
+          # Nothing is lost if the merge never lands - the captures are sitting
+          # in an open pull request - so this warns rather than failing the run.
+          if [ -z "$merged" ]; then
+            echo "::warning::thumbnail pull request could not be merged automatically; it is open for review"
           fi
-          # Deliberately no deploy dispatch here. Pushes made with GITHUB_TOKEN
-          # do not trigger workflows, so this commit ends the chain and the new
-          # thumbnails ship with the next deploy. Dispatching one instead would
-          # loop forever the moment a capture is not byte-identical.
+
+          # A merge performed with GITHUB_TOKEN does not trigger workflows, so
+          # this ends the chain exactly as the old direct push did: the new
+          # thumbnails ship with the next deploy rather than causing one.
+          # Dispatching a deploy here instead would loop forever the moment a
+          # capture is not byte-identical.
