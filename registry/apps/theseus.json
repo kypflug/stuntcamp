@@ -1,0 +1,17 @@
+{
+  "$schema": "../schema.json",
+  "slug": "theseus",
+  "name": "theseus",
+  "tagline": "Remember everything, organize nothing: a personal library that turns any link you save into a clean, readable page.",
+  "type": "redirect",
+  "author": { "name": "kypflug", "url": "https://github.com/kypflug" },
+  "url": "https://theseus.page",
+  "tags": ["read-it-later", "reading", "library", "pwa", "ai"],
+  "accent": "#b54e35",
+  "thumbnail": {
+    "light": "assets/shots/theseus.jpg",
+    "dark": "assets/shots/theseus-dark.jpg"
+  },
+  "added": "2026-07-25",
+  "visible": true
+}
