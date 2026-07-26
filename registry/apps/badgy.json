@@ -5,6 +5,7 @@
   "tagline": "An attendance calendar for planning office days against RTO badge-in targets.",
   "type": "redirect",
   "author": { "name": "kypflug", "url": "https://github.com/kypflug" },
+  "source": "https://github.com/kypflug/badgy",
   "url": "https://badgy.tech",
   "tags": ["calendar", "pwa", "rto"],
   "accent": "#e0a33c",
