@@ -49,6 +49,75 @@ const HEX_RE = /^#[0-9a-fA-F]{6}$/;
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const SHA_RE = /^[0-9a-f]{40}$/;
 
+/**
+ * Card text colour is derived from the app's own accent, which means contrast
+ * would otherwise be decided by whichever hex a contributor happened to like.
+ * These mirror the ramp in hub/style.css: a card's title and tag chips are
+ * `--accent-ink`, the accent mixed --ink-mix of the way from --accent-shift,
+ * sitting on --card and on the --tag-mix chip fill respectively. Keep the two
+ * files in step; the numbers are duplicated rather than parsed so the hub build
+ * stays dependency-free.
+ */
+const THEMES = [
+  { name: 'light', card: '#f8faf9', shift: '#10241f', inkMix: 0.45, tagMix: 0.24 },
+  { name: 'dark', card: '#142224', shift: '#f4fbf8', inkMix: 0.62, tagMix: 0.20 },
+];
+
+/** WCAG AA for normal-size text. Titles are 1.15rem, chips .68rem. */
+const AA_NORMAL = 4.5;
+
+const toRgb = (h) => [
+  parseInt(h.slice(1, 3), 16),
+  parseInt(h.slice(3, 5), 16),
+  parseInt(h.slice(5, 7), 16),
+];
+
+/** color-mix(in srgb, a p%, b) — a straight per-channel sRGB blend. */
+const mixSrgb = (a, p, b) => a.map((v, i) => Math.round(v * p + b[i] * (1 - p)));
+
+const relLuminance = (rgb) => {
+  const [r, g, b] = rgb.map((v) => {
+    const c = v / 255;
+    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+};
+
+export function contrastRatio(a, b) {
+  const la = relLuminance(a);
+  const lb = relLuminance(b);
+  const [hi, lo] = la > lb ? [la, lb] : [lb, la];
+  return (hi + 0.05) / (lo + 0.05);
+}
+
+/**
+ * Returns a list of human-readable contrast problems for an accent, or an empty
+ * array when the accent is legible everywhere the card uses it.
+ */
+export function accentContrastIssues(accent) {
+  if (!HEX_RE.test(accent || '')) return [];
+  const rgb = toRgb(accent);
+  const issues = [];
+
+  for (const t of THEMES) {
+    const card = toRgb(t.card);
+    const ink = mixSrgb(rgb, t.inkMix, toRgb(t.shift));
+    const chip = mixSrgb(rgb, t.tagMix, card);
+
+    const onCard = contrastRatio(ink, card);
+    const onChip = contrastRatio(ink, chip);
+
+    if (onCard < AA_NORMAL) {
+      issues.push(`${t.name} card title is ${onCard.toFixed(2)}:1 (needs ${AA_NORMAL}:1)`);
+    }
+    if (onChip < AA_NORMAL) {
+      issues.push(`${t.name} tag chips are ${onChip.toFixed(2)}:1 (needs ${AA_NORMAL}:1)`);
+    }
+  }
+
+  return issues;
+}
+
 const KNOWN_KEYS = new Set([
   'slug', 'name', 'tagline', 'type', 'author', 'source', 'url',
   'build', 'tags', 'accent', 'thumbnail', 'added', 'visible',
@@ -115,7 +184,13 @@ export function validateApp(app, site, seenSlugs = new Set()) {
   }
 
   if (app.source != null && !httpsUrl(app.source)) err('source must be an http(s) URL');
-  if (app.accent != null && !HEX_RE.test(app.accent)) err('accent must be a #rrggbb hex colour');
+  if (app.accent != null && !HEX_RE.test(app.accent)) {
+    err('accent must be a #rrggbb hex colour');
+  } else if (app.accent != null) {
+    for (const issue of accentContrastIssues(app.accent)) {
+      warn(`accent ${app.accent}: ${issue} — pick a deeper shade or the card will be hard to read`);
+    }
+  }
   if (app.added != null && !DATE_RE.test(app.added)) err('added must be YYYY-MM-DD');
   if (app.visible != null && typeof app.visible !== 'boolean') err('visible must be a boolean');
   if (app.tags != null) {
