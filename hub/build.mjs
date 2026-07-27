@@ -7,7 +7,7 @@
  */
 import { cpSync, existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { DIST, ROOT, loadApps, loadSite, publicUrl, stylesheet, validateAll } from '../scripts/registry.mjs';
+import { DIST, ROOT, LADDER_FORMATS, THUMB_WIDTHS, loadApps, loadSite, publicUrl, stylesheet, validateAll, variantName } from '../scripts/registry.mjs';
 
 const HUB = join(ROOT, 'hub');
 const THUMBS = join(HUB, 'assets', 'thumbs');
@@ -19,54 +19,26 @@ const esc = (s) => String(s ?? '')
   .replace(/"/g, '&quot;');
 
 /**
- * The mountain scene that shows through the "camp" letterforms. Colours are the
- * three stops of the wordmark's former gradient, so the palette moved into the
- * mountains rather than being lost: sage in the distance, teal in the middle,
- * slate in front. Every layer is filled with its own vertical gradient so no
- * edge reads as a flat cut-out, and only the distant range keeps hard angular
- * peaks — close enough in tone to the sky to pass for haze. Peaks sit low in
- * the viewBox to land inside the x-height, the only band wide enough to show
- * them. Emitted as a data URI so it costs no extra request.
+ * The one icon in the system, lifted from aldenblog.io: an "arrow out of box"
+ * that follows the last word of a title opening an address we do not control.
+ * Everything else that would be an icon here is a word.
  */
-function scene(c) {
-  const grad = (id, top, bottom) =>
-    `<linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1">`
-    + `<stop offset="0" stop-color="${top}"/><stop offset="1" stop-color="${bottom}"/>`
-    + `</linearGradient>`;
+const EXTERNAL_ICON = ' <svg class="external-link-icon" viewBox="0 0 24 24" aria-hidden="true">'
+  + '<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/>'
+  + '</svg>';
 
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 96" preserveAspectRatio="none">`
-    + `<defs>`
-    + grad('sky', c.sky1, c.sky2)
-    + grad('far', c.far1, c.far2)
-    + grad('mid', c.mid1, c.mid2)
-    + grad('near', c.near1, c.near2)
-    + `</defs>`
-    + `<rect width="180" height="96" fill="url(#sky)"/>`
-    + `<path fill="url(#far)" d="M0 96V60l18-16 12 10 18-24 18 22 14-12 18-8 16 20 18-18 18 20 16-12 14 16v38z"/>`
-    + `<path fill="url(#mid)" d="M0 96V72q14-10 26-5t26-10q14-15 28-6t28-3q14-11 28 2t24 7v42z"/>`
-    + `<path fill="url(#near)" d="M0 96V83c14-9 28-11 44-5s28 11 44 5 28-13 44-7 34 9 48 3v17z"/>`
-    + `</svg>`;
-  return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
-}
+/**
+ * The painting that shows through the "camp" letterforms is a CSS background,
+ * so a browser only finds it once the stylesheet has parsed — and it is the
+ * largest thing above the fold. These preloads carry the same densities the
+ * stylesheet's image-set() offers, so the fetch they start is the one the
+ * background ends up wanting. The media query means only one scheme is ever
+ * fetched, and the type means engines without AVIF skip the hint and simply
+ * take the JPEG when the CSS lands.
+ */
+const WORDMARK_ART = `<link rel="preload" as="image" type="image/avif" media="(prefers-color-scheme: light)" imagesrcset="assets/ridge-320.avif 1x, assets/ridge-640.avif 2x">
+<link rel="preload" as="image" type="image/avif" media="(prefers-color-scheme: dark)" imagesrcset="assets/ridge-dark-320.avif 1x, assets/ridge-dark-640.avif 2x">`;
 
-const SCENE_LIGHT = scene({
-  sky1: '#7fada4', sky2: '#5b949a',
-  far1: '#5d8b7c', far2: '#4a7a6a',
-  mid1: '#3d8894', mid2: '#2a7d8a',
-  near1: '#456575', near2: '#3d5a65',
-});
-
-const SCENE_DARK = scene({
-  sky1: '#cdeae1', sky2: '#a9d5c8',
-  far1: '#97c9b8', far2: '#8ec4b2',
-  mid1: '#79b6a4', mid2: '#6aa694',
-  near1: '#58b3c0', near2: '#429aa9',
-});
-
-const WORDMARK_STYLE = `<style>
-.camp{background-image:${SCENE_LIGHT}}
-@media (prefers-color-scheme:dark){.camp{background-image:${SCENE_DARK}}}
-</style>`;
 
 /**
  * Auto-captured screenshots land in hub/assets/thumbs/ as a light/dark pair,
@@ -94,19 +66,81 @@ function findThumbs(app) {
 }
 
 /**
+ * How wide a card actually is, so the browser can pick a rung instead of
+ * guessing the full viewport. The grid is `auto-fill, minmax(19rem, 1fr)` with
+ * a 20px gap inside a 1216px page and a clamped page gutter, which works out
+ * as three columns above ~1032px, two above ~688px, and one below. Close
+ * enough: `sizes` only has to land the browser on the right candidate.
+ */
+const SIZES = '(min-width: 1296px) 392px, (min-width: 1032px) 33vw, (min-width: 688px) 48vw, calc(100vw - 40px)';
+
+/**
+ * The rungs scripts/images.mjs cut from a capture, as srcset strings keyed by
+ * format. Missing rungs are simply not linked, so a hand-committed shot that
+ * has never been through the ladder still renders — it just ships whole.
+ */
+function ladder(rel) {
+  if (!rel || /^https?:/i.test(rel)) return null;
+  const found = {};
+  for (const fmt of LADDER_FORMATS) {
+    const rungs = THUMB_WIDTHS
+      .map((w) => ({ w, file: variantName(rel, w, fmt) }))
+      .filter(({ file }) => existsSync(join(HUB, file)))
+      .map(({ w, file }) => `${file} ${w}w`);
+    if (rungs.length) found[fmt] = rungs.join(', ');
+  }
+  return Object.keys(found).length ? found : null;
+}
+
+/**
+ * A card's screenshot. Two axes stack here: colour scheme, which is a media
+ * query, and format plus width, which is a srcset. The dark sources come first
+ * because a <picture> takes the first source that matches.
+ */
+function shotFor(light, dark, alt) {
+  const attrs = `alt="${esc(alt)}" loading="lazy" decoding="async" width="1280" height="800"`;
+  const lightRungs = ladder(light);
+  const darkRungs = dark ? ladder(dark) : null;
+  const sources = [];
+
+  if (dark) {
+    for (const fmt of LADDER_FORMATS) {
+      if (!darkRungs?.[fmt]) continue;
+      const type = fmt === 'jpg' ? '' : ` type="image/${fmt}"`;
+      sources.push(`<source media="(prefers-color-scheme: dark)"${type} srcset="${esc(darkRungs[fmt])}" sizes="${SIZES}">`);
+    }
+    // The whole capture, for a browser that has the media query but no ladder.
+    sources.push(`<source media="(prefers-color-scheme: dark)" srcset="${esc(dark)}">`);
+  }
+
+  for (const fmt of LADDER_FORMATS) {
+    if (fmt === 'jpg' || !lightRungs?.[fmt]) continue;
+    sources.push(`<source type="image/${fmt}" srcset="${esc(lightRungs[fmt])}" sizes="${SIZES}">`);
+  }
+
+  const fallback = lightRungs?.jpg ? ` srcset="${esc(lightRungs.jpg)}" sizes="${SIZES}"` : '';
+  const img = `<img src="${esc(light)}"${fallback} ${attrs}>`;
+  return sources.length ? `<picture>${sources.join('')}${img}</picture>` : img;
+}
+
+/**
  * What a card promises. The registry already knows whether an app is served
  * from this Static Web App, redirects to somebody else's host, is proxied under
  * our address, or is only a repo link — but the card used to keep that to
  * itself, so an extension repo looked exactly like an app you could open.
+ *
+ * Almanac gives a type three accents and no more, so the four registry types
+ * fold onto them: hosted here is post green, anything living at somebody
+ * else's address is project teal, a repo you can only read is link ochre.
  */
-const DEST_LABELS = {
-  redirect: 'offsite',
-  proxy: 'proxied',
-  link: 'repo only',
+const DEST_BADGES = {
+  redirect: { label: 'Offsite', kind: 'project' },
+  proxy: { label: 'Proxied', kind: 'project' },
+  link: { label: 'Repo only', kind: 'link' },
 };
 
 function destination(app, site) {
-  const label = DEST_LABELS[app.type] || 'hosted here';
+  const badge = DEST_BADGES[app.type] || { label: 'Hosted', kind: 'post' };
   // redirect and link both hand the visitor to an address we do not control.
   if (app.type === 'redirect' || app.type === 'link') {
     let where = app.url;
@@ -116,22 +150,19 @@ function destination(app, site) {
       // and .where ellipses anything too long for the card.
       where = (u.host + u.pathname).replace(/\/$/, '');
     } catch { /* validator already flagged it */ }
-    return { label, where: `\u2192 ${where}` };
+    return { ...badge, where: `\u2192 ${where}`, external: true };
   }
-  return { label, where: `${app.slug}.${site.domain}` };
+  return { ...badge, where: `${app.slug}.${site.domain}`, external: false };
 }
 
 function card(app, site) {
   const href = publicUrl(app, site);
   const { light, dark } = findThumbs(app);
-  const accent = app.accent || '#8aa4c8';
   const dest = destination(app, site);
 
   let shot;
-  if (light && dark) {
-    shot = `<picture><source media="(prefers-color-scheme: dark)" srcset="${esc(dark)}"><img src="${esc(light)}" alt="Screenshot of ${esc(app.name)}" loading="lazy" decoding="async" width="1280" height="800"></picture>`;
-  } else if (light) {
-    shot = `<img src="${esc(light)}" alt="Screenshot of ${esc(app.name)}" loading="lazy" decoding="async" width="1280" height="800">`;
+  if (light) {
+    shot = shotFor(light, dark, `Screenshot of ${app.name}`);
   } else {
     shot = `<span class="glyph" aria-hidden="true">${esc(app.name.slice(0, 2))}</span>`;
   }
@@ -143,18 +174,18 @@ function card(app, site) {
     : '&mdash;';
 
   const source = app.source
-    ? ` &middot; <a href="${esc(app.source)}" rel="noopener">source</a>`
+    ? `<span aria-hidden="true">&middot;</span><a href="${esc(app.source)}" rel="noopener">source</a>`
     : '';
 
   // app.tags is deliberately not rendered: filled chips read as filters, and
   // there is nothing to filter yet. The field stays in the registry for when
   // the shelf is full enough that browsing by tag earns its place.
-  return `<article class="card" style="--accent:${esc(accent)}">
+  return `<article class="card">
   <div class="shot">${shot}</div>
   <div class="body">
     <div class="hrow">
-      <h2><a href="${esc(href)}">${esc(app.name)}</a></h2>
-      <span class="dest">${esc(dest.label)}</span>
+      <h2><a href="${esc(href)}"${dest.external ? ' rel="noopener"' : ''}>${esc(app.name)}${dest.external ? EXTERNAL_ICON : ''}</a></h2>
+      <span class="badge badge--${dest.kind}">${esc(dest.label)}</span>
     </div>
     <p class="tagline">${esc(app.tagline)}</p>
     <p class="meta"><span class="where">${esc(dest.where)}</span><span class="who">${author}${source}</span></p>
@@ -162,10 +193,21 @@ function card(app, site) {
 </article>`;
 }
 
+/**
+ * The invitation, drawn as the slot an app has not filled yet. It is the only
+ * card without a surface: a dashed hairline where a manifest would be.
+ */
+const PARK_CARD = `<article class="park">
+  <h2>Park something here</h2>
+  <p>Add your project to stuntcamp with a pull request.</p>
+  <a class="go" href="https://github.com/kypflug/stuntcamp/blob/main/docs/ADDING-AN-APP.md" rel="noopener">Read the docs &rarr;</a>
+</article>`;
+
 function page({ site, apps, cssHref }) {
-  const body = apps.length
-    ? `<div class="grid">\n${apps.map((a) => card(a, site)).join('\n')}\n</div>`
+  const cards = apps.length
+    ? apps.map((a) => card(a, site)).join('\n')
     : `<p class="empty">Nothing parked here yet.</p>`;
+  const body = `<div class="grid">\n${cards}\n${PARK_CARD}\n</div>`;
 
   return `<!doctype html>
 <html lang="en">
@@ -174,8 +216,8 @@ function page({ site, apps, cssHref }) {
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${esc(site.title)} &mdash; ${esc(site.tagline)}</title>
 <meta name="description" content="${esc(site.blurb)}">
-<meta name="theme-color" content="#e4ebe7" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#0d1516" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f4f1ea" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#131b1b" media="(prefers-color-scheme: dark)">
 <meta property="og:title" content="${esc(site.title)}">
 <meta property="og:description" content="${esc(site.blurb)}">
 <meta property="og:type" content="website">
@@ -187,9 +229,12 @@ function page({ site, apps, cssHref }) {
 <meta property="og:image:alt" content="${esc(site.title)} &mdash; ${esc(site.blurb)}">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-<link rel="preload" href="assets/fonts/inter-latin-var.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/playfair-display-var.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/source-serif-4-var.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/ibm-plex-sans-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/ibm-plex-mono-400.woff2" as="font" type="font/woff2" crossorigin>
+${WORDMARK_ART}
 <link rel="stylesheet" href="${esc(cssHref)}">
-${WORDMARK_STYLE}
 </head>
 <body>
 <div class="wrap">
@@ -204,7 +249,7 @@ ${WORDMARK_STYLE}
 ${body}
 </main>
 <footer>
-  <span>a personal geocities for stunt apps</span>
+  <span>a personal parking lot for stunt apps</span>
   <span class="right"><a href="https://github.com/kypflug/stuntcamp" rel="noopener">park something here</a></span>
 </footer>
 </div>
@@ -220,10 +265,11 @@ function notFound(site, cssHref) {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>nothing parked here &mdash; ${esc(site.title)}</title>
-<meta name="theme-color" content="#e4ebe7" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#0d1516" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f4f1ea" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#131b1b" media="(prefers-color-scheme: dark)">
 <link rel="icon" href="https://${esc(site.domain)}/assets/favicon.svg" type="image/svg+xml">
-<link rel="preload" href="https://${esc(site.domain)}/assets/fonts/inter-latin-var.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="https://${esc(site.domain)}/assets/fonts/playfair-display-var.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="https://${esc(site.domain)}/assets/fonts/source-serif-4-var.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="https://${esc(site.domain)}/${esc(cssHref)}">
 </head>
 <body>
@@ -270,16 +316,13 @@ function main() {
 
   const assets = join(HUB, 'assets');
   if (existsSync(assets) && readdirSync(assets).length) {
+    // Emptied first: cpSync overwrites but never removes, so a renamed or
+    // retired image would otherwise sit in a local dist forever and go on
+    // being served by the preview. CI always starts from an empty dist.
+    rmSync(join(DIST, 'assets'), { recursive: true, force: true });
     cpSync(assets, join(DIST, 'assets'), { recursive: true });
   }
   writeFileSync(join(DIST, 'assets', cssName), css);
-  // Drop fingerprinted stylesheets from earlier builds so a local dist does not
-  // silently accumulate them. CI always starts from an empty dist.
-  for (const f of readdirSync(join(DIST, 'assets'))) {
-    if (/^style\.[0-9a-f]{8}\.css$/.test(f) && f !== cssName) {
-      rmSync(join(DIST, 'assets', f), { force: true });
-    }
-  }
   cpSync(join(HUB, 'staticwebapp.config.json'), join(DIST, 'staticwebapp.config.json'));
 
   console.log(`hub   ${apps.length} card(s) -> dist/index.html (${cssName})`);

@@ -1,106 +1,170 @@
-/* Watercolor blue-green palette, lifted from aldenblog.io so the two sites
-   read as the same person's. Light is the default; dark is an override, which
-   is the structure the blog uses too. */
+/* Almanac — the design language behind aldenblog.io, applied to the camp so the
+   two sites read as the same person's. Warm paper on the page, one hairline
+   instead of tinted borders and lifts, four typefaces with one job each, and
+   three accents that say what a card is rather than what colour it likes.
 
-/* Inter, SIL Open Font License 1.1 — the licence ships beside it in
-   assets/fonts/OFL.txt. This is the latin subset of the variable face, so one
-   48 KB file covers every weight from 400 to 700. Self-hosted rather than
-   pulled from a font CDN: the hub has no third-party runtime dependencies and
-   should not gain one for a typeface. */
+   The tokens below are Almanac's own, trimmed to what a shelf of cards needs.
+   Light is the default; dark is a designed palette, not an inversion. */
+
+/* ---- fonts ----------------------------------------------------------------
+
+   Four families, one job each: Playfair for the wordmark and card titles,
+   Source Serif for the lede, Plex Sans for card copy, Plex Mono for anything
+   that is a fact about an app. All four are self-hosted — the hub has no
+   third-party runtime dependencies and should not gain one for a typeface —
+   and all four are SIL OFL 1.1, whose text ships beside them in fonts/OFL.txt.
+   Only the weights the page actually sets are shipped. */
+
 @font-face {
-  font-family: Inter;
+  font-family: "Playfair Display";
   font-style: normal;
   font-weight: 400 700;
   font-display: swap;
-  src: url("fonts/inter-latin-var.woff2") format("woff2");
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
-    U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
-    U+2212, U+2215, U+FEFF, U+FFFD;
+  src: url("fonts/playfair-display-var.woff2") format("woff2");
 }
+
+@font-face {
+  font-family: "Source Serif 4";
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: swap;
+  src: url("fonts/source-serif-4-var.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "IBM Plex Sans";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("fonts/ibm-plex-sans-400.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("fonts/ibm-plex-mono-400.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("fonts/ibm-plex-mono-500.woff2") format("woff2");
+}
+
+/* ---- tokens ---- */
 
 :root {
   color-scheme: light dark;
 
-  --bg: #e4ebe7;
-  --card: #f8faf9;
-  --line: #c2d1c8;
-  --line-2: #aec2b6;
-  --ink: #1d3a2a;
-  --dim: #3d5a4a;
-  --dimmer: #4d6a5a;
-  --link: #2a7d8a;
-  --link-hover: #1d5a65;
-  --primary: #4a7a6a;
-  --shadow: rgba(35, 64, 48, .14);
+  /* surfaces */
+  --paper: #f4f1ea;
+  --surface: #fffdf8;
+  --surface-sunk: #ece8de;
+  --hairline: #e0dbd0;
 
-  /* Two soft washes behind the page, echoing the blog's watercolor hero. */
-  --wash-1: #d2e3da;
-  --wash-2: #cfe0e5;
+  /* ink. --ink-3 is darker than the original handoff so the 11px mono meta it
+     colours clears 4.5:1 on --surface. */
+  --ink: #16201c;
+  --ink-2: #48564f;
+  --ink-3: #646f6a;
 
-  /* Per-app accent tinting. Card colour is derived entirely from the app's own
-     accent; --accent-shift is what accents are pulled toward for legibility.
-     --ink-mix and --hot-mix are how far text roles are pulled: less accent means
-     more shift, which is darker on light and lighter on dark, so a smaller mix
-     is always the higher-contrast one. --hot-mix is therefore below --ink-mix,
-     so hovering a title makes it easier to read rather than harder. */
-  --tint: 9%;
-  --chip-mix: 24%;
-  --accent-shift: #10241f;
-  --ink-mix: 45%;
-  --hot-mix: 30%;
-  --shot-base: #eef4f0;
-  --glyph-mix: #24413a;
+  /* Three accents, one per kind of thing a card can be: hosted here is post
+     green, offsite is project teal, repo-only is link ochre. The border
+     variants keep the original warmth, since a 1px rule is exempt from text
+     contrast. */
+  --accent-post: #35604f;
+  --accent-project: #1f6f7d;
+  --accent-link: #8f6329;
+  --accent-post-border: #35604f;
+  --accent-project-border: #1f6f7d;
+  --accent-link-border: #a8763a;
 
-  --radius: 14px;
-  --mono: ui-monospace, SFMono-Regular, "Cascadia Mono", Menlo, Consolas, monospace;
-  /* Inter is loaded above, so the wordmark's tracking is now applied to the face
-     it was actually tuned for. The rest of the stack is what shows during swap. */
-  --sans: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --shadow-card-highlight: none;
+
+  --font-display: "Playfair Display", Georgia, "Times New Roman", serif;
+  --font-read: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --font-ui: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", "SF Mono", Monaco, Consolas, monospace;
+
+  --type-page-title: 600 44px/1.06 var(--font-display);
+  --type-card-title: 600 21px/1.22 var(--font-display);
+  --type-dek-sm: 400 19px/1.5 var(--font-read);
+  --type-card-body: 400 15px/1.6 var(--font-ui);
+  --type-meta: 400 11px/1 var(--font-mono);
+  --type-badge: 500 10px/1 var(--font-mono);
+
+  --track-page-title: -0.02em;
+  --track-meta: .06em;
+  --track-chip: .08em;
+  --track-badge: .12em;
+
+  --radius-card: 6px;
+  --radius-chip: 3px;
+  --radius-tag: 2px;
+
+  /* One motion token, applied to border-color and color only. */
+  --ease: 180ms ease;
 }
 
+/* The floor sits at L~11%, cards about 9% above it, and elevation becomes a
+   hairline plus a 4% inset top highlight. Never a drop shadow on a dark
+   surface. */
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #0d1516;
-    --card: #142224;
-    --line: #1e3235;
-    --line-2: #2b464a;
-    --ink: #d5e4dc;
-    --dim: #b0c8ba;
-    --dimmer: #8aa89a;
-    --link: #5abbc9;
-    --link-hover: #7dd0dc;
-    --primary: #7ab3a0;
-    --shadow: rgba(0, 0, 0, .5);
+    --paper: #131b1b;
+    --surface: #1c2524;
+    --surface-sunk: #223230;
+    --hairline: #2c3a37;
 
-    --wash-1: #16292b;
-    --wash-2: #142a30;
+    --ink: #e2e9e3;
+    --ink-2: #aebbb3;
+    --ink-3: #85958d;
 
-    --tint: 14%;
-    --chip-mix: 20%;
-    --accent-shift: #f4fbf8;
-    --ink-mix: 62%;
-    --hot-mix: 45%;
-    --shot-base: #0e1a1c;
-    --glyph-mix: #e8f2ee;
+    --accent-post: #7fb8a4;
+    --accent-project: #6fc6d2;
+    --accent-link: #cd9d5f;
+    --accent-post-border: #3f6a5b;
+    --accent-project-border: #2f5d66;
+    --accent-link-border: #6a5533;
+
+    --shadow-card-highlight: inset 0 1px 0 rgba(255, 255, 255, .04);
   }
 }
 
-* { box-sizing: border-box; }
+/* ---- reset ---- */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
 
 body {
   margin: 0;
   min-height: 100vh;
-  padding: clamp(1.5rem, 5vw, 4rem) clamp(1rem, 4vw, 2rem) 4rem;
-  background:
-    radial-gradient(60rem 32rem at 12% -8%, var(--wash-1), transparent 70%),
-    radial-gradient(48rem 28rem at 92% 4%, var(--wash-2), transparent 68%),
-    var(--bg);
+  padding: clamp(40px, 5vw, 72px) clamp(20px, 4vw, 40px) 48px;
+  background: var(--paper);
   color: var(--ink);
-  font: 16px/1.6 var(--sans);
+  font: var(--type-card-body);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-.wrap { width: min(76rem, 100%); margin: 0 auto; }
+img, picture { max-width: 100%; }
+
+h1, h2 { margin: 0; font-family: var(--font-display); font-weight: 600; color: var(--ink); }
+
+p { margin: 0; }
+
+a { color: var(--accent-project); text-decoration: none; }
+a:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+/* Every interactive element gets the same visible ring. */
+:focus-visible { outline: 2px solid var(--accent-project); outline-offset: 2px; border-radius: 2px; }
+
+.wrap { width: min(1216px, 100%); margin: 0 auto; }
 
 /* ---- masthead ---- */
 
@@ -108,40 +172,66 @@ body {
    small text sits on the wordmark's baseline. Wraps to a stack when there is
    no room. */
 header {
-  margin-bottom: clamp(2rem, 5vw, 3.25rem);
+  margin-bottom: clamp(32px, 4vw, 44px);
   display: flex;
   align-items: flex-end;
   flex-wrap: wrap;
-  gap: clamp(1.25rem, 4vw, 3rem);
+  gap: clamp(24px, 4vw, 48px);
 }
 
 .mark {
   display: inline-flex;
   align-items: baseline;
-  margin: 0;
-  font: 700 clamp(3rem, 11vw, 5.5rem) / 1 var(--sans);
-  letter-spacing: -.045em;
+  font: 600 clamp(56px, 9vw, 88px)/1 var(--font-display);
+  letter-spacing: -.03em;
 }
 
-.mark em {
-  font-style: normal;
-  color: var(--ink);
-}
+.mark em { font-style: normal; color: var(--ink); }
 
-/* "camp" is a window onto a mountain scene: the ridges are a background image
-   clipped to the letterforms. Peaks sit inside the x-height band so they land
-   where the glyphs actually are. The scene itself is generated in build.mjs and
-   injected as a rule in the document head, one per colour scheme. */
+/* "camp" is a window onto the ridgeline painting the blog wears as its
+   masthead: the panorama is a background image clipped to the letterforms,
+   scaled tall and cropped near the peaks so the ridges land inside the
+   x-height. A gradient over it keeps the strokes dark enough to read as type
+   first and picture second.
+
+   The letterforms are only ~209px across, so the painting ships at 320w and
+   640w. The plain url() is the fallback an engine without image-set() — or
+   without its type() argument — falls back to; anything modern takes the AVIF
+   at the density it actually needs, which is a twentieth of the full painting. */
 .camp {
   font-style: normal;
-  color: var(--primary);
-  background-size: 100% 100%;
+  color: var(--ink-3);
+  background-image:
+    linear-gradient(rgba(22, 32, 28, .62), rgba(22, 32, 28, .34) 55%, rgba(22, 32, 28, .1)),
+    url("ridge-640.jpg");
+  background-image:
+    linear-gradient(rgba(22, 32, 28, .62), rgba(22, 32, 28, .34) 55%, rgba(22, 32, 28, .1)),
+    image-set(url("ridge-320.avif") type("image/avif") 1x,
+              url("ridge-640.avif") type("image/avif") 2x,
+              url("ridge-320.jpg") type("image/jpeg") 1x,
+              url("ridge-640.jpg") type("image/jpeg") 2x);
+  background-size: 100% 370%;
+  background-position: center 47%;
   background-repeat: no-repeat;
 }
 
-/* Only disappear the letterforms where the scene can actually show through.
-   Unguarded, a blocked data URI or an engine without background-clip erases
-   half the site name. */
+@media (prefers-color-scheme: dark) {
+  .camp {
+    background-image:
+      linear-gradient(rgba(226, 233, 227, .34), rgba(226, 233, 227, .5) 55%, rgba(226, 233, 227, .62)),
+      url("ridge-dark-640.jpg");
+    background-image:
+      linear-gradient(rgba(226, 233, 227, .34), rgba(226, 233, 227, .5) 55%, rgba(226, 233, 227, .62)),
+      image-set(url("ridge-dark-320.avif") type("image/avif") 1x,
+                url("ridge-dark-640.avif") type("image/avif") 2x,
+                url("ridge-dark-320.jpg") type("image/jpeg") 1x,
+                url("ridge-dark-640.jpg") type("image/jpeg") 2x);
+  }
+}
+
+/* Only disappear the letterforms where the painting can actually show through.
+   Unguarded, a blocked image or an engine without background-clip erases half
+   the site name. */
 @supports ((background-clip: text) or (-webkit-background-clip: text)) {
   .camp {
     -webkit-background-clip: text;
@@ -150,7 +240,7 @@ header {
   }
 }
 
-/* Forced colours throw the scene away, so take the letterforms back. */
+/* Forced colours throw the painting away, so take the letterforms back. */
 @media (forced-colors: active) {
   .camp {
     background-image: none;
@@ -158,107 +248,55 @@ header {
   }
 }
 
-/* ---- lede ---- */
+.says { padding-bottom: 10px; }
 
-.says { padding-bottom: .45rem; }
-
-.lede {
-  margin: 0;
-  max-width: 24rem;
-  font-size: clamp(1rem, 2.4vw, 1.1rem);
-  color: var(--dim);
-}
+.lede { max-width: 24rem; font: var(--type-dek-sm); color: var(--ink-2); }
 
 .by {
-  margin: .35rem 0 0;
-  font: .78rem/1.5 var(--mono);
-  color: var(--dimmer);
+  margin-top: 10px;
+  font: var(--type-meta);
+  letter-spacing: var(--track-meta);
+  text-transform: uppercase;
+  color: var(--ink-3);
 }
 
-.by a {
-  color: var(--link);
-  text-decoration: none;
-  border-bottom: 1px solid color-mix(in srgb, var(--link) 40%, transparent);
-}
-
-.by a:hover { color: var(--link-hover); }
-
-/* ---- grid ---- */
+/* ---- the shelf ---- */
 
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(19rem, 1fr));
-  gap: 1.15rem;
+  gap: 20px;
+  align-items: stretch;
 }
 
-/* Everything inside a card is derived from that card's own accent rather than
-   the page palette, so each app keeps its own identity. */
+/* Surface, hairline, 6px. That is the entire card treatment: no coloured left
+   border, no lift, no glow. */
 .card {
-  --accent: #8aa4c8;
-  --accent-ink: color-mix(in srgb, var(--accent) var(--ink-mix), var(--accent-shift));
-  --accent-hot: color-mix(in srgb, var(--accent) var(--hot-mix), var(--accent-shift));
-  --accent-soft: color-mix(in srgb, var(--accent) var(--chip-mix), var(--card));
-  --accent-line: color-mix(in srgb, var(--accent) 28%, var(--line));
-  --accent-body: color-mix(in srgb, var(--accent) 16%, var(--dim));
-  --accent-faint: color-mix(in srgb, var(--accent) 14%, var(--dimmer));
   position: relative;
   display: flex;
   flex-direction: column;
-  background: linear-gradient(180deg, color-mix(in srgb, var(--accent) var(--tint), var(--card)), var(--card));
-  border: 1px solid var(--accent-line);
-  border-radius: var(--radius);
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card-highlight);
   overflow: hidden;
-  transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+  transition: border-color var(--ease);
 }
 
+/* Hover moves the border to --ink-3 and nothing else. */
 .card:hover,
-.card:focus-within {
-  transform: translateY(-3px);
-  border-color: color-mix(in srgb, var(--accent) 60%, transparent);
-  box-shadow: 0 18px 40px -22px color-mix(in srgb, var(--accent) 55%, var(--shadow));
-}
+.card:focus-within { border-color: var(--ink-3); }
 
-/* Text roles take their hue and chroma from the app's accent but have their
-   lightness capped, so legibility is a property of the design rather than of
-   whichever hex a contributor liked. Verified across the whole hue circle at
-   maximum in-gamut chroma: the worst case is 5.22:1 against the card and the
-   chip, comfortably past the 4.5:1 AA floor. The color-mix values above remain
-   the fallback for engines without relative colour syntax, which is why the
-   accent contrast warning in the registry validator still earns its place. */
-@supports (color: oklch(from red l c h)) {
-  .card {
-    --accent-ink: oklch(from var(--accent) min(l, 0.50) c h);
-    --accent-hot: oklch(from var(--accent) min(l, 0.42) c h);
-  }
-}
-
-/* Dark flips the cap into a floor: the same accent has to be light enough to
-   read on a dark card instead of dark enough to read on a light one. */
-@media (prefers-color-scheme: dark) {
-  @supports (color: oklch(from red l c h)) {
-    .card {
-      --accent-ink: oklch(from var(--accent) max(l, 0.80) c h);
-      --accent-hot: oklch(from var(--accent) max(l, 0.90) c h);
-    }
-  }
-}
-
-/* The whole card is one link (see .body h2 a::after), so the ring belongs on the
-   card rather than the inline title text. Keyboard users previously got only the
-   3px lift — which prefers-reduced-motion removes outright, leaving nothing. */
-.card:focus-within {
-  outline: 2px solid var(--accent-hot);
-  outline-offset: 2px;
-}
+.card a { color: inherit; }
+.card a:hover { text-decoration: none; }
 
 .shot {
-  position: relative;
   aspect-ratio: 16 / 10;
-  border-bottom: 1px solid var(--accent-line);
+  display: grid;
+  place-items: center;
   overflow: hidden;
-  background: linear-gradient(140deg,
-    color-mix(in srgb, var(--accent) 30%, var(--shot-base)),
-    color-mix(in srgb, var(--accent) 7%, var(--shot-base)));
+  border-bottom: 1px solid var(--hairline);
+  background: var(--surface-sunk);
 }
 
 .shot img {
@@ -269,45 +307,35 @@ header {
   display: block;
 }
 
+/* No screenshot yet: the app's first two letters, set in the title face. */
 .shot .glyph {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  font: 700 4.5rem/1 var(--sans);
-  letter-spacing: -.06em;
-  color: color-mix(in srgb, var(--accent) 55%, var(--glyph-mix));
-  opacity: .45;
-  text-transform: lowercase;
+  font: 600 64px/1 var(--font-display);
+  letter-spacing: -.03em;
+  color: var(--ink-3);
 }
 
-.body { padding: .95rem 1.05rem 1.05rem; display: flex; flex-direction: column; gap: .5rem; flex: 1; }
+.body {
+  padding: 18px 20px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
 
-/* Title and destination chip share a baseline, so the chip reads as a label on
-   the title rather than as another line of content. */
+/* Title and type badge share a baseline, so the badge reads as a label on the
+   title rather than as another line of content. */
 .hrow {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: .6rem;
+  gap: 12px;
 }
 
-.body h2 { margin: 0; font-size: 1.15rem; letter-spacing: -.02em; }
+.body h2 { font: var(--type-card-title); }
 
-.dest {
-  flex: none;
-  padding: .2rem .45rem;
-  border-radius: 6px;
-  background: var(--accent-soft);
-  color: var(--accent-ink);
-  font: .68rem/1 var(--mono);
-}
-
-.body h2 a {
-  color: var(--accent-ink);
-  text-decoration: none;
-}
-
+/* The whole card is one link. The ring therefore belongs on the card rather
+   than around the inline title text — but only where :has() can put it there,
+   so an engine without it still shows a ring of some kind. */
 .body h2 a::after {
   content: "";
   position: absolute;
@@ -315,111 +343,156 @@ header {
   z-index: 1;
 }
 
-/* The title link already covers the card, so its own ring would just duplicate
-   the one .card:focus-within draws. */
-.body h2 a:focus-visible { outline: none; }
+@supports selector(:has(*)) {
+  .body h2 a:focus-visible { outline: none; }
 
-.card:hover h2 a { color: var(--accent-hot); }
+  .card:has(.body h2 a:focus-visible) {
+    outline: 2px solid var(--accent-project);
+    outline-offset: 2px;
+  }
+}
 
-.tagline { margin: 0; color: var(--accent-body); font-size: .92rem; }
+.card:hover h2 a { color: var(--accent-project); }
 
-/* Tags stay in the registry but are no longer drawn: filled pills read as
-   filters, and with a shelf this small there is nothing to filter. */
+/* What the card is: hosted here, somebody else's host, or only a repo. */
+.badge {
+  flex: none;
+  display: inline-block;
+  padding: 3px 7px;
+  border: 1px solid;
+  border-radius: var(--radius-tag);
+  font: var(--type-badge);
+  letter-spacing: var(--track-badge);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.badge--post { color: var(--accent-post); border-color: var(--accent-post-border); }
+.badge--project { color: var(--accent-project); border-color: var(--accent-project-border); }
+.badge--link { color: var(--accent-link); border-color: var(--accent-link-border); }
+
+.tagline { color: var(--ink-2); }
+
+/* The one icon in the system: it follows the last word of a title that opens
+   somebody else's address. Sized in em so it tracks the title. */
+.external-link-icon {
+  width: .72em;
+  height: .72em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vertical-align: baseline;
+  opacity: .7;
+}
+
+/* app.tags is deliberately not rendered: filled chips read as filters, and
+   there is nothing to filter yet. The field stays in the registry for when the
+   shelf is full enough that browsing by tag earns its place. */
 
 .meta {
   margin-top: auto;
-  padding-top: .7rem;
-  border-top: 1px solid var(--accent-line);
+  padding-top: 14px;
+  border-top: 1px solid var(--hairline);
   display: flex;
-  align-items: center;
+  align-items: baseline;
   justify-content: space-between;
-  gap: .5rem;
-  font: .72rem/1.4 var(--mono);
-  color: var(--accent-faint);
+  gap: 10px;
+  font: var(--type-meta);
+  letter-spacing: var(--track-meta);
+  text-transform: uppercase;
+  color: var(--ink-3);
 }
 
 /* Where the card actually takes you — a subdomain here, or somebody else's host. */
 .where { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-.who { flex: none; display: flex; align-items: center; gap: .4rem; }
+.who { flex: none; display: flex; gap: 6px; }
 
-.meta a {
-  position: relative;
-  z-index: 2;
-  color: var(--accent-ink);
-  text-decoration: none;
-  border-bottom: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+/* Meta links sit above the stretched title link so they stay clickable. */
+.meta a { position: relative; z-index: 2; color: var(--ink-3); }
+.meta a:hover { color: var(--ink-2); text-decoration: underline; text-underline-offset: 3px; }
+
+/* ---- park something here ---- */
+
+/* The invitation is a card that has not been filled in yet, so it is drawn the
+   way an empty slot would be: same shape, dashed hairline, no surface. */
+.park {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+  border: 1px dashed var(--hairline);
+  border-radius: var(--radius-card);
+  padding: 22px 24px;
 }
 
-.meta a:hover { color: var(--accent-hot); }
+.park h2 { font: var(--type-card-title); }
+.park p { color: var(--ink-2); }
 
-/* Meta links are small targets inside an already-outlined card, so they get a
-   tight ring of their own — the card ring says which card, this says which link. */
-.meta a:focus-visible {
-  outline: 2px solid var(--accent-hot);
-  outline-offset: 2px;
-  border-radius: 3px;
+.park .go {
+  font: var(--type-meta);
+  letter-spacing: var(--track-chip);
+  text-transform: uppercase;
 }
-
-/* Everything outside a card runs on the page palette rather than an accent. */
-.by a:focus-visible,
-footer a:focus-visible,
-.oops .cta:focus-visible {
-  outline: 2px solid var(--link);
-  outline-offset: 2px;
-  border-radius: 3px;
-}
-
-/* ---- empty + footer ---- */
 
 .empty {
-  border: 1px dashed var(--line-2);
-  border-radius: var(--radius);
-  padding: 3rem 1rem;
+  grid-column: 1 / -1;
+  border: 1px dashed var(--hairline);
+  border-radius: var(--radius-card);
+  padding: 48px 16px;
   text-align: center;
-  color: var(--dim);
+  color: var(--ink-2);
 }
+
+/* ---- footer ---- */
 
 footer {
-  margin-top: 3rem;
-  padding-top: 1.25rem;
-  border-top: 1px solid var(--line);
+  margin-top: clamp(32px, 4vw, 44px);
+  padding-top: 22px;
+  border-top: 1px solid var(--hairline);
   display: flex;
   flex-wrap: wrap;
-  gap: .75rem 1.25rem;
-  font: .78rem/1.5 var(--mono);
-  color: var(--dimmer);
+  gap: 12px 24px;
+  font: var(--type-meta);
+  letter-spacing: var(--track-meta);
+  text-transform: uppercase;
+  color: var(--ink-3);
 }
 
-footer a {
-  color: var(--link);
-  text-decoration: none;
-  border-bottom: 1px solid color-mix(in srgb, var(--link) 40%, transparent);
-}
-
-footer a:hover { color: var(--link-hover); }
+footer a { color: var(--ink-3); }
+footer a:hover { color: var(--ink-2); }
 footer .right { margin-left: auto; }
 
 /* ---- 404 ---- */
 
 .oops { width: min(38rem, 100%); margin: 12vh auto 0; text-align: center; }
-.oops h1 { font-size: clamp(2rem, 8vw, 3rem); letter-spacing: -.04em; margin: 0 0 .5rem; }
-.oops p { color: var(--dim); }
-.oops code { font-family: var(--mono); color: var(--ink); }
+.oops h1 { font: var(--type-page-title); letter-spacing: var(--track-page-title); margin-bottom: 14px; }
+.oops p { font: var(--type-dek-sm); color: var(--ink-2); }
+.oops code { font-family: var(--font-mono); font-size: .9em; color: var(--ink); }
 
+/* Nothing in this system is fully rounded, so the way back is a chip. */
 .oops .cta {
   display: inline-block;
-  margin-top: 1.5rem;
-  padding: .6rem 1.1rem;
-  border: 1px solid var(--line-2);
-  border-radius: 999px;
-  color: var(--ink);
-  text-decoration: none;
+  margin-top: 26px;
+  padding: 9px 14px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-chip);
+  font: var(--type-meta);
+  letter-spacing: var(--track-chip);
+  text-transform: uppercase;
+  color: var(--ink-2);
+  transition: border-color var(--ease), color var(--ease);
 }
 
-.oops .cta:hover { border-color: var(--primary); color: var(--link-hover); }
+.oops .cta:hover { border-color: var(--ink-3); color: var(--ink); text-decoration: none; }
 
 @media (prefers-reduced-motion: reduce) {
-  .card { transition: none; }
-  .card:hover, .card:focus-within { transform: none; }
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

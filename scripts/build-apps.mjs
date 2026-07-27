@@ -171,8 +171,8 @@ function placeholder(app, message) {
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${app.name} is between takes</title>
-<meta name="theme-color" content="#e4ebe7" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#0d1516" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f4f1ea" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#131b1b" media="(prefers-color-scheme: dark)">
 <link rel="stylesheet" href="https://stuntcamp.app/assets/${cssName}"></head>
 <body><div class="oops">
 <h1>between takes</h1>
