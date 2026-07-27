@@ -36,8 +36,8 @@ const EXTERNAL_ICON = ' <svg class="external-link-icon" viewBox="0 0 24 24" aria
  * fetched, and the type means engines without AVIF skip the hint and simply
  * take the JPEG when the CSS lands.
  */
-const WORDMARK_ART = `<link rel="preload" as="image" type="image/avif" media="(prefers-color-scheme: light)" imagesrcset="assets/ridge-320.avif 1x, assets/ridge-640.avif 2x">
-<link rel="preload" as="image" type="image/avif" media="(prefers-color-scheme: dark)" imagesrcset="assets/ridge-dark-320.avif 1x, assets/ridge-dark-640.avif 2x">`;
+const WORDMARK_ART = `<link rel="preload" as="image" type="image/avif" media="(prefers-color-scheme: light)" imagesrcset="assets/ridge.320.avif 1x, assets/ridge.640.avif 2x">
+<link rel="preload" as="image" type="image/avif" media="(prefers-color-scheme: dark)" imagesrcset="assets/ridge-dark.320.avif 1x, assets/ridge-dark.640.avif 2x">`;
 
 
 /**

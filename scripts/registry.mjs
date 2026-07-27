@@ -35,14 +35,28 @@ export const THUMB_WIDTHS = [400, 800];
 export const ART_WIDTHS = [320, 640];
 export const LADDER_FORMATS = ['avif', 'jpg'];
 
-const VARIANT_RE = /-(\d+)\.(avif|jpg)$/;
+const VARIANT_RE = /\.(\d+)\.(avif|jpg)$/;
 
-/** True for a generated rung, so sources and derivatives never get confused. */
+/**
+ * True for a generated rung. The width is separated with a dot because a slug
+ * is a single DNS label and can never contain one — `game-2048.jpg` is a real
+ * capture, `game-2048.400.jpg` is a rung cut from it. A hyphen here would make
+ * those two indistinguishable, and the prune step would eat the source.
+ */
 export const isVariant = (file) => VARIANT_RE.test(file);
 
-/** aethercalc-dark.jpg + 400 + avif -> aethercalc-dark-400.avif */
+/** The width a rung was cut at, or null if it is not a rung. */
+export const variantWidth = (file) => {
+  const m = VARIANT_RE.exec(file);
+  return m ? Number(m[1]) : null;
+};
+
+/** The source a rung was cut from: aethercalc.400.avif -> aethercalc.jpg */
+export const variantSource = (file) => file.replace(VARIANT_RE, '.jpg');
+
+/** aethercalc-dark.jpg + 400 + avif -> aethercalc-dark.400.avif */
 export const variantName = (file, width, format) =>
-  `${file.replace(/\.[a-z0-9]+$/i, '')}-${width}.${format}`;
+  `${file.replace(/\.[a-z0-9]+$/i, '')}.${width}.${format}`;
 
 
 /** Types whose files get built into the hub Static Web App under /a/<slug>/. */

@@ -203,13 +203,13 @@ header {
   color: var(--ink-3);
   background-image:
     linear-gradient(rgba(22, 32, 28, .62), rgba(22, 32, 28, .34) 55%, rgba(22, 32, 28, .1)),
-    url("ridge-640.jpg");
+    url("ridge.640.jpg");
   background-image:
     linear-gradient(rgba(22, 32, 28, .62), rgba(22, 32, 28, .34) 55%, rgba(22, 32, 28, .1)),
-    image-set(url("ridge-320.avif") type("image/avif") 1x,
-              url("ridge-640.avif") type("image/avif") 2x,
-              url("ridge-320.jpg") type("image/jpeg") 1x,
-              url("ridge-640.jpg") type("image/jpeg") 2x);
+    image-set(url("ridge.320.avif") type("image/avif") 1x,
+              url("ridge.640.avif") type("image/avif") 2x,
+              url("ridge.320.jpg") type("image/jpeg") 1x,
+              url("ridge.640.jpg") type("image/jpeg") 2x);
   background-size: 100% 370%;
   background-position: center 47%;
   background-repeat: no-repeat;
@@ -219,13 +219,13 @@ header {
   .camp {
     background-image:
       linear-gradient(rgba(226, 233, 227, .34), rgba(226, 233, 227, .5) 55%, rgba(226, 233, 227, .62)),
-      url("ridge-dark-640.jpg");
+      url("ridge-dark.640.jpg");
     background-image:
       linear-gradient(rgba(226, 233, 227, .34), rgba(226, 233, 227, .5) 55%, rgba(226, 233, 227, .62)),
-      image-set(url("ridge-dark-320.avif") type("image/avif") 1x,
-                url("ridge-dark-640.avif") type("image/avif") 2x,
-                url("ridge-dark-320.jpg") type("image/jpeg") 1x,
-                url("ridge-dark-640.jpg") type("image/jpeg") 2x);
+      image-set(url("ridge-dark.320.avif") type("image/avif") 1x,
+                url("ridge-dark.640.avif") type("image/avif") 2x,
+                url("ridge-dark.320.jpg") type("image/jpeg") 1x,
+                url("ridge-dark.640.jpg") type("image/jpeg") 2x);
   }
 }
 

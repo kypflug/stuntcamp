@@ -20,7 +20,7 @@
 import { existsSync, readdirSync, rmSync } from 'node:fs';
 import { basename, extname, join } from 'node:path';
 import sharp from 'sharp';
-import { ART_WIDTHS, LADDER_FORMATS, ROOT, THUMB_WIDTHS, isVariant, variantName } from './registry.mjs';
+import { ART_WIDTHS, LADDER_FORMATS, ROOT, THUMB_WIDTHS, isVariant, variantName, variantSource, variantWidth } from './registry.mjs';
 
 const ONLY = (() => {
   const i = process.argv.indexOf('--only');
@@ -60,13 +60,14 @@ for (const { dir, widths, only } of SUBJECTS) {
   if (!existsSync(dir)) continue;
   const files = readdirSync(dir);
 
-  // Drop rungs whose source has gone: an app leaves the registry, or a
-  // manifest starts overriding its thumbnail, and the ladder should follow.
+  // Drop rungs that no longer belong: the source has gone — an app leaves the
+  // registry, or a manifest starts overriding its thumbnail — or the ladder
+  // has since been cut at different widths.
   for (const file of files) {
     if (!isVariant(file)) continue;
-    const source = file.replace(/-\d+\.(avif|jpg)$/, '.jpg');
+    const source = variantSource(file);
     if (only && !only.includes(source)) continue;
-    if (files.includes(source)) continue;
+    if (files.includes(source) && widths.includes(variantWidth(file))) continue;
     rmSync(join(dir, file), { force: true });
     pruned += 1;
   }

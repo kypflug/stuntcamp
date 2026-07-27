@@ -163,8 +163,10 @@ and the redundant dark copy is dropped automatically — no action needed.
 
 Each capture is then cut into a responsive ladder by `npm run images`
 (`scripts/images.mjs`, sharp): 400w and 800w in AVIF and JPEG, beside the
-original as `<slug>-400.avif`, `<slug>-800.jpg` and so on. A card is only about
-390 pixels wide, so the index links the ladder with `srcset`/`sizes` and a 1x
+original as `<slug>.400.avif`, `<slug>.800.jpg` and so on. The width is
+separated with a dot because a slug never contains one — `game-2048.jpg` is a
+capture, `game-2048.400.jpg` is a rung cut from it. A card is only about 390
+pixels wide, so the index links the ladder with `srcset`/`sizes` and a 1x
 visitor downloads roughly a tenth of what the bare capture used to cost. The
 1280w file stays committed as the source those rungs are cut from, and as the
 fallback for a browser without `srcset`.
