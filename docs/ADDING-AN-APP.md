@@ -116,7 +116,7 @@ with no subdomain at all.
 | `url` | for redirect/proxy/link | Where it actually lives. Shown on the card as the destination. |
 | `build` | for source-build/artifact | See above. |
 | `tags` | no | Up to 6 short strings. Stored, but not currently drawn on the card — see below. |
-| `accent` | no | `#rrggbb`. Tints the card. Any hue works; see below. |
+| `accent` | no | `#rrggbb`. Kept for your own use; the card no longer tints by it. |
 | `thumbnail` | no | Path/URL, or `{ "light", "dark" }`. Leave it out and we screenshot the live app. |
 | `added` | no | `YYYY-MM-DD`. |
 | `visible` | no | Set `false` to keep it in the registry but off the index. |
@@ -126,26 +126,28 @@ with no subdomain at all.
 The card names your app, its tagline, who wrote it, and — derived from `type`
 and `url` — where clicking it will actually take you:
 
-| `type` | Chip | Destination line |
+| `type` | Badge | Destination line |
 | --- | --- | --- |
-| `in-repo`, `source-build`, `artifact` | `hosted here` | `<slug>.stuntcamp.app` |
+| `in-repo`, `source-build`, `artifact` | `hosted` | `<slug>.stuntcamp.app` |
 | `proxy` | `proxied` | `<slug>.stuntcamp.app` |
 | `redirect` | `offsite` | the host you redirect to |
 | `link` | `repo only` | the host and path you link to |
 
 This is why `link` is worth using honestly: a browser extension or a CLI gets a
 card that says `repo only` instead of pretending to be a site you can open.
+A title that opens an address we do not control also picks up the little
+arrow-out-of-box icon, which is the only icon on the site.
 
 `tags` are validated and kept in the registry but are not drawn on the card
 right now. Filled chips read as filters, and with a shelf this small there is
 nothing to filter — they'll come back if browsing by tag ever earns its place.
 Keep setting them.
 
-`accent` can be any `#rrggbb`. Card text takes its hue and chroma from your
-accent but has its lightness clamped, so a pale yellow and a deep navy are both
-legible. On engines without CSS relative colour syntax the older blend is used
-as a fallback, and `npm run validate` warns when an accent would fall below
-WCAG AA on that path — worth heeding, but never fatal.
+`accent` is still accepted, but the hub does not use it. The design gives a card
+one of three accents according to what it is — hosted here, somebody else's
+address, or a repo you can only read — so contrast is a property of the design
+rather than of whichever hex you liked. Set it if your app wants a theme colour
+of its own; nothing on the index will read it.
 
 ## Thumbnails
 
@@ -158,6 +160,25 @@ visitor's theme.
 
 If your app ignores `prefers-color-scheme`, both captures come out identical
 and the redundant dark copy is dropped automatically — no action needed.
+
+Each capture is then cut into a responsive ladder by `npm run images`
+(`scripts/images.mjs`, sharp): 400w and 800w in AVIF and JPEG, beside the
+original as `<slug>.400.avif`, `<slug>.800.jpg` and so on. The width is
+separated with a dot because a slug never contains one — `game-2048.jpg` is a
+capture, `game-2048.400.jpg` is a rung cut from it. A card is only about 390
+pixels wide, so the index links the ladder with `srcset`/`sizes` and a 1x
+visitor downloads roughly a tenth of what the bare capture used to cost. The
+1280w file stays committed as the source those rungs are cut from, and as the
+fallback for a browser without `srcset`.
+
+The same script cuts the wordmark painting at 320w and 640w, which
+`hub/style.css` links with `image-set()`. If you add another image the index
+draws, give it a ladder there rather than linking a full-size file.
+
+The ladder runs in CI right after the capture, so an automatic thumbnail needs
+nothing from you. Run `npm run images` yourself after committing a hand-made
+one — anything missing a ladder is simply served whole, so forgetting costs
+bytes rather than breaking the card.
 
 Set `thumbnail` only if you want something hand-made. Setting it also opts your
 app out of the capture job entirely, so nothing overwrites your image.

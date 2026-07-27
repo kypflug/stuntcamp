@@ -1,20 +1,21 @@
 #!/usr/bin/env node
 /**
  * Captures a thumbnail for every app that does not override one, writing
- * hub/assets/thumbs/<slug>.png. Run after a deploy so the shots match what is
+ * hub/assets/thumbs/<slug>.jpg. Run after a deploy so the shots match what is
  * actually live.
  *
  *   node scripts/screenshot.mjs                  # shoot live subdomains
  *   node scripts/screenshot.mjs --local          # shoot the local preview
  *   node scripts/screenshot.mjs --only aethercalc
  *
- * Playwright is the one dependency in the repo and it is CI-only: the hub build
- * itself stays dependency-free and simply uses whatever thumbnails exist.
+ * Playwright and sharp are CI-only: the hub build itself stays dependency-free
+ * and simply uses whatever thumbnails exist.
  */
 import { mkdirSync, readFileSync, rmSync } from 'node:fs';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { chromium } from 'playwright';
+import sharp from 'sharp';
 import { ROOT, loadApps, loadSite, publicUrl } from './registry.mjs';
 
 const LOCAL = process.argv.includes('--local');
@@ -70,13 +71,16 @@ for (const app of apps) {
       await page.addStyleTag({ content: FREEZE });
       await page.waitForTimeout(1200);
       // Cards render at a few hundred pixels wide, so a 1x JPEG keeps the index
-      // light. Drop any stale thumbnail in another format for the same slug.
-      await page.screenshot({
-        path: join(THUMBS, `${app.slug}${scheme.suffix}.jpg`),
-        type: 'jpeg',
-        quality: 82,
+      // light. Playwright captures losslessly and sharp does the final encode —
+      // mozjpeg gets the same quality into fewer bytes. Drop any stale
+      // thumbnail in another format for the same slug.
+      const png = await page.screenshot({
+        type: 'png',
         clip: { x: 0, y: 0, ...VIEWPORT },
       });
+      await sharp(png)
+        .jpeg({ quality: 82, mozjpeg: true })
+        .toFile(join(THUMBS, `${app.slug}${scheme.suffix}.jpg`));
       for (const ext of ['png', 'webp']) {
         rmSync(join(THUMBS, `${app.slug}${scheme.suffix}.${ext}`), { force: true });
       }

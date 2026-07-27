@@ -90,7 +90,7 @@
     "accent": {
       "type": "string",
       "pattern": "^#[0-9a-fA-F]{6}$",
-      "description": "#rrggbb. Tints the card. Lightness is clamped for text, so any hue works; the validator warns if the pre-OKLCH fallback would drop below WCAG AA."
+      "description": "#rrggbb. Accepted but no longer drawn: the hub gives a card one of three accents by type. Keep it if your app wants a theme colour of its own."
     },
     "thumbnail": {
       "description": "Overrides the auto-captured screenshot. A string is used for both themes; { light, dark } supplies a pair. null = auto.",

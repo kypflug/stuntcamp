@@ -23,6 +23,42 @@ export function stylesheet() {
 export const HOSTED_TYPES = ['in-repo', 'source-build', 'artifact'];
 export const ALL_TYPES = [...HOSTED_TYPES, 'redirect', 'proxy', 'link'];
 
+/**
+ * The responsive ladders. A card is ~392 CSS pixels at the widest layout, so
+ * 400w covers 1x and 800w covers 2x; the 1280w capture stays on disk as the
+ * source and the no-srcset fallback. The wordmark painting shows through
+ * letterforms only 209 CSS pixels wide, so it needs far less again.
+ * scripts/images.mjs writes these, hub/build.mjs and hub/style.css link
+ * whichever exist — the widths live here so a rung can be added in one place.
+ */
+export const THUMB_WIDTHS = [400, 800];
+export const ART_WIDTHS = [320, 640];
+export const LADDER_FORMATS = ['avif', 'jpg'];
+
+const VARIANT_RE = /\.(\d+)\.(avif|jpg)$/;
+
+/**
+ * True for a generated rung. The width is separated with a dot because a slug
+ * is a single DNS label and can never contain one — `game-2048.jpg` is a real
+ * capture, `game-2048.400.jpg` is a rung cut from it. A hyphen here would make
+ * those two indistinguishable, and the prune step would eat the source.
+ */
+export const isVariant = (file) => VARIANT_RE.test(file);
+
+/** The width a rung was cut at, or null if it is not a rung. */
+export const variantWidth = (file) => {
+  const m = VARIANT_RE.exec(file);
+  return m ? Number(m[1]) : null;
+};
+
+/** The source a rung was cut from: aethercalc.400.avif -> aethercalc.jpg */
+export const variantSource = (file) => file.replace(VARIANT_RE, '.jpg');
+
+/** aethercalc-dark.jpg + 400 + avif -> aethercalc-dark.400.avif */
+export const variantName = (file, width, format) =>
+  `${file.replace(/\.[a-z0-9]+$/i, '')}.${width}.${format}`;
+
+
 /** Types whose files get built into the hub Static Web App under /a/<slug>/. */
 export const isHosted = (app) => HOSTED_TYPES.includes(app.type);
 
@@ -61,82 +97,6 @@ const REPO_RE = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
 const HEX_RE = /^#[0-9a-fA-F]{6}$/;
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const SHA_RE = /^[0-9a-f]{40}$/;
-
-/**
- * Card text colour is derived from the app's own accent, which means contrast
- * would otherwise be decided by whichever hex a contributor happened to like.
- * These mirror the ramp in hub/style.css: a card's title and its destination
- * chip are `--accent-ink`, the accent mixed --ink-mix of the way from
- * --accent-shift, sitting on --card and on the --chip-mix chip fill
- * respectively. Keep the two files in step; the numbers are duplicated rather
- * than parsed so the hub build stays dependency-free.
- *
- * This is the pre-OKLCH fallback only. Engines with relative colour syntax
- * clamp lightness instead, which is legible for any hex — so a failure here is
- * worth a warning, never an error.
- */
-const THEMES = [
-  { name: 'light', card: '#f8faf9', shift: '#10241f', inkMix: 0.45, chipMix: 0.24, deeper: true },
-  { name: 'dark', card: '#142224', shift: '#f4fbf8', inkMix: 0.62, chipMix: 0.20, deeper: false },
-];
-
-/** WCAG AA for normal-size text. Titles are 1.15rem, the chip .68rem. */
-const AA_NORMAL = 4.5;
-
-const toRgb = (h) => [
-  parseInt(h.slice(1, 3), 16),
-  parseInt(h.slice(3, 5), 16),
-  parseInt(h.slice(5, 7), 16),
-];
-
-/** color-mix(in srgb, a p%, b) — a straight per-channel sRGB blend. */
-const mixSrgb = (a, p, b) => a.map((v, i) => Math.round(v * p + b[i] * (1 - p)));
-
-const relLuminance = (rgb) => {
-  const [r, g, b] = rgb.map((v) => {
-    const c = v / 255;
-    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
-  });
-  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
-};
-
-export function contrastRatio(a, b) {
-  const la = relLuminance(a);
-  const lb = relLuminance(b);
-  const [hi, lo] = la > lb ? [la, lb] : [lb, la];
-  return (hi + 0.05) / (lo + 0.05);
-}
-
-/**
- * Returns a list of human-readable contrast problems for an accent, or an empty
- * array when the accent is legible everywhere the card uses it. Each problem
- * carries its own remedy, because the direction differs by theme: a light card
- * needs a deeper accent, a dark one needs a lighter accent.
- */
-export function accentContrastIssues(accent) {
-  if (!HEX_RE.test(accent || '')) return [];
-  const rgb = toRgb(accent);
-  const issues = [];
-
-  for (const t of THEMES) {
-    const card = toRgb(t.card);
-    const ink = mixSrgb(rgb, t.inkMix, toRgb(t.shift));
-    const chip = mixSrgb(rgb, t.chipMix, card);
-    const remedy = t.deeper ? 'use a deeper shade' : 'use a lighter shade';
-
-    const onCard = contrastRatio(ink, card);
-    const onChip = contrastRatio(ink, chip);
-
-    if (onCard < AA_NORMAL) {
-      issues.push(`${t.name} card title is ${onCard.toFixed(2)}:1, needs ${AA_NORMAL}:1 — ${remedy}`);
-    }
-    if (onChip < AA_NORMAL) {
-      issues.push(`${t.name} destination chip is ${onChip.toFixed(2)}:1, needs ${AA_NORMAL}:1 — ${remedy}`);
-    }
-  }
-
-  return issues;
-}
 
 const KNOWN_KEYS = new Set([
   'slug', 'name', 'tagline', 'type', 'author', 'source', 'url',
@@ -204,12 +164,12 @@ export function validateApp(app, site, seenSlugs = new Set()) {
   }
 
   if (app.source != null && !httpsUrl(app.source)) err('source must be an http(s) URL');
+  // Kept as a valid field, but no longer drawn: the hub runs on Almanac's three
+  // accents — one per kind of destination — rather than a colour per app, so a
+  // card's contrast is a property of the design instead of whichever hex a
+  // contributor liked. An app is still free to use it as its own theme colour.
   if (app.accent != null && !HEX_RE.test(app.accent)) {
     err('accent must be a #rrggbb hex colour');
-  } else if (app.accent != null) {
-    for (const issue of accentContrastIssues(app.accent)) {
-      warn(`accent ${app.accent}: ${issue} (affects only engines without OKLCH relative colour)`);
-    }
   }
   if (app.added != null && !DATE_RE.test(app.added)) err('added must be YYYY-MM-DD');
   if (app.visible != null && typeof app.visible !== 'boolean') err('visible must be a boolean');

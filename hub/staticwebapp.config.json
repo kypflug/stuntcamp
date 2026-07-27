@@ -8,6 +8,7 @@
     "x-content-type-options": "nosniff"
   },
   "mimeTypes": {
+    ".avif": "image/avif",
     ".webp": "image/webp",
     ".svg": "image/svg+xml",
     ".json": "application/json",

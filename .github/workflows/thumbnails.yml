@@ -39,6 +39,9 @@ jobs:
       - name: Capture thumbnails
         run: node scripts/screenshot.mjs
 
+      - name: Cut the responsive ladder
+        run: node scripts/images.mjs
+
       - name: Open and merge a pull request with any changes
         env:
           GH_TOKEN: ${{ github.token }}
@@ -48,7 +51,7 @@ jobs:
           set -euo pipefail
           git config user.name 'stuntcamp-bot'
           git config user.email 'stuntcamp-bot@users.noreply.github.com'
-          git add hub/assets/thumbs
+          git add hub/assets
           if git diff --cached --quiet; then
             echo 'no thumbnail changes'
             exit 0
