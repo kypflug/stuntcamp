@@ -6,13 +6,15 @@
  *
  * The wordmark scene is lifted straight out of the built index.html rather than
  * redefined here, so the card can never drift from what the site actually shows.
- * Playwright is CI-only, exactly like scripts/screenshot.mjs — the hub build
- * itself stays dependency-free and simply copies whatever image is committed.
+ * Playwright and sharp are CI-only, exactly like scripts/screenshot.mjs — the
+ * hub build itself stays dependency-free and simply copies whatever image is
+ * committed.
  */
 import { readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { chromium } from 'playwright';
+import sharp from 'sharp';
 import { DIST, ROOT, loadSite } from './registry.mjs';
 
 const site = loadSite();
@@ -83,9 +85,10 @@ try {
   await page.goto(pathToFileURL(tmpPage).href, { waitUntil: 'networkidle' });
   await page.evaluate(() => document.fonts.ready);
   await page.waitForTimeout(300);
-  // JPEG, like the thumbnails: the card is a smooth wash behind large type, so
-  // PNG spends most of its bytes describing a gradient losslessly for no gain.
-  await page.screenshot({ path: OUT, type: 'jpeg', quality: 90 });
+  // JPEG, like the thumbnails: capture losslessly from Playwright, then let
+  // sharp handle the final optimized encode.
+  const png = await page.screenshot({ type: 'png' });
+  await sharp(png).jpeg({ quality: 90, mozjpeg: true }).toFile(OUT);
   console.log(`og    ${site.domain} card -> hub/assets/og.jpg`);
 } finally {
   await browser.close();
