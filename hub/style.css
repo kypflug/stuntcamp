@@ -201,6 +201,8 @@ header {
 .camp {
   font-style: normal;
   color: var(--ink-3);
+  padding-bottom: .2em;
+  margin-bottom: -.2em;
   background-image:
     linear-gradient(rgba(22, 32, 28, .62), rgba(22, 32, 28, .34) 55%, rgba(22, 32, 28, .1)),
     url("ridge.640.jpg");
