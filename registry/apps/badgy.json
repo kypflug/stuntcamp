@@ -2,13 +2,13 @@
   "$schema": "../schema.json",
   "slug": "badgy",
   "name": "badgy",
-  "tagline": "An attendance calendar for planning office days against RTO badge-in targets.",
+  "tagline": "An attendance calendar for planning office days against your employer's return-to-office policy.",
   "type": "redirect",
   "author": { "name": "kypflug", "url": "https://github.com/kypflug" },
   "source": "https://github.com/kypflug/badgy",
   "url": "https://badgy.tech",
   "tags": ["calendar", "pwa", "rto"],
-  "accent": "#e0a33c",
+  "accent": "#12645a",
   "thumbnail": {
     "light": "assets/shots/badgy.jpg",
     "dark": "assets/shots/badgy-dark.jpg"
