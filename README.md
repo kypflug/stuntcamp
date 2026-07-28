@@ -45,7 +45,7 @@ registry/site.json          domain, blurb, reserved slugs
 registry/schema.json        JSON Schema for editor autocomplete
 hub/build.mjs               registry -> dist/index.html
 hub/style.css               the whole design
-hub/assets/fonts/           self-hosted Playfair/Source Serif/Plex faces (SIL OFL, licence alongside)
+hub/assets/fonts/           self-hosted Space Grotesk/Plex faces (SIL OFL, licence alongside)
 hub/assets/ridge*.jpg       the ridgeline painting the wordmark is cut out of, plus its ladder
 apps/<slug>/                source for in-repo apps
 scripts/registry.mjs        shared loader + validator

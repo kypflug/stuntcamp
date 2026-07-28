@@ -1,6 +1,6 @@
 /* Almanac — the design language behind aldenblog.io, applied to the camp so the
-   two sites read as the same person's. Warm paper on the page, one hairline
-   instead of tinted borders and lifts, four typefaces with one job each, and
+   two sites read as the same person's. Blue-grey stock on the page, one hairline
+   instead of tinted borders and lifts, three typefaces with one job each, and
    three accents that say what a card is rather than what colour it likes.
 
    The tokens below are Almanac's own, trimmed to what a shelf of cards needs.
@@ -8,27 +8,20 @@
 
 /* ---- fonts ----------------------------------------------------------------
 
-   Four families, one job each: Playfair for the wordmark and card titles,
-   Source Serif for the lede, Plex Sans for card copy, Plex Mono for anything
-   that is a fact about an app. All four are self-hosted — the hub has no
-   third-party runtime dependencies and should not gain one for a typeface —
-   and all four are SIL OFL 1.1, whose text ships beside them in fonts/OFL.txt.
-   Only the weights the page actually sets are shipped. */
+   Three families, one job each: Space Grotesk for the wordmark and card titles,
+   Plex Sans for the lede and card copy, Plex Mono for anything that is a fact
+   about an app. The blog keeps its serifs; the camp is the sibling that went
+   sans, so the shared faces are the two Plex ones. All three are self-hosted —
+   the hub has no third-party runtime dependencies and should not gain one for a
+   typeface — and all three are SIL OFL 1.1, whose text ships beside them in
+   fonts/OFL.txt. Only the weights the page actually sets are shipped. */
 
 @font-face {
-  font-family: "Playfair Display";
+  font-family: "Space Grotesk";
   font-style: normal;
   font-weight: 400 700;
   font-display: swap;
-  src: url("fonts/playfair-display-var.woff2") format("woff2");
-}
-
-@font-face {
-  font-family: "Source Serif 4";
-  font-style: normal;
-  font-weight: 400 600;
-  font-display: swap;
-  src: url("fonts/source-serif-4-var.woff2") format("woff2");
+  src: url("fonts/space-grotesk-var.woff2") format("woff2");
 }
 
 @font-face {
@@ -61,32 +54,36 @@
   color-scheme: light dark;
 
   /* surfaces */
-  --paper: #f4f1ea;
-  --surface: #fffdf8;
-  --surface-sunk: #ece8de;
-  --hairline: #e0dbd0;
+  --paper: #e4eaee;
+  --surface: #f8fafc;
+  --surface-sunk: #d9e2e8;
+  --hairline: #c9d4db;
 
   /* ink. --ink-3 is darker than the original handoff so the 11px mono meta it
      colours clears 4.5:1 on --surface. */
-  --ink: #16201c;
-  --ink-2: #48564f;
-  --ink-3: #646f6a;
+  --ink: #0f1c26;
+  --ink-2: #3d515e;
+  --ink-3: #5b6f7b;
 
   /* Three accents, one per kind of thing a card can be: hosted here is post
-     green, offsite is project teal, repo-only is link ochre. The border
-     variants keep the original warmth, since a 1px rule is exempt from text
-     contrast. */
-  --accent-post: #35604f;
-  --accent-project: #1f6f7d;
-  --accent-link: #8f6329;
-  --accent-post-border: #35604f;
-  --accent-project-border: #1f6f7d;
-  --accent-link-border: #a8763a;
+     green, offsite is project blue, repo-only is link ochre. The border
+     variants run a shade warmer than the text ones, since a 1px rule is exempt
+     from text contrast. */
+  --accent-post: #1f6155;
+  --accent-project: #23508f;
+  --accent-link: #8a5327;
+  --accent-post-border: #2a6f62;
+  --accent-project-border: #23508f;
+  --accent-link-border: #9a6234;
 
   --shadow-card-highlight: none;
 
-  --font-display: "Playfair Display", Georgia, "Times New Roman", serif;
-  --font-read: "Source Serif 4", Georgia, "Times New Roman", serif;
+  /* Screenshots are other people's colour, dropped onto our stock. A touch of
+     desaturation stops a card's contents shouting over the shelf around it. */
+  --shot-filter: saturate(.85);
+
+  --font-display: "Space Grotesk", "IBM Plex Sans", sans-serif;
+  --font-read: "IBM Plex Sans", system-ui, sans-serif;
   --font-ui: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-mono: "IBM Plex Mono", "SF Mono", Monaco, Consolas, monospace;
 
@@ -115,23 +112,27 @@
    surface. */
 @media (prefers-color-scheme: dark) {
   :root {
-    --paper: #131b1b;
-    --surface: #1c2524;
-    --surface-sunk: #223230;
-    --hairline: #2c3a37;
+    --paper: #101820;
+    --surface: #18222b;
+    --surface-sunk: #1e2a34;
+    --hairline: #2a3742;
 
-    --ink: #e2e9e3;
-    --ink-2: #aebbb3;
-    --ink-3: #85958d;
+    --ink: #e3eaef;
+    --ink-2: #a9b8c2;
+    --ink-3: #7f909b;
 
-    --accent-post: #7fb8a4;
-    --accent-project: #6fc6d2;
-    --accent-link: #cd9d5f;
-    --accent-post-border: #3f6a5b;
-    --accent-project-border: #2f5d66;
-    --accent-link-border: #6a5533;
+    --accent-post: #8cc4b2;
+    --accent-project: #7cb0e0;
+    --accent-link: #cfa26a;
+    --accent-post-border: #33645a;
+    --accent-project-border: #2f5680;
+    --accent-link-border: #6a5535;
 
     --shadow-card-highlight: inset 0 1px 0 rgba(255, 255, 255, .04);
+
+    /* A screenshot is lit for its own page, not for this floor. Taking the
+       brightest whites down a notch keeps a card from glowing against it. */
+    --shot-filter: brightness(.92) saturate(.85);
   }
 }
 
@@ -204,10 +205,10 @@ header {
   padding-bottom: .2em;
   margin-bottom: -.2em;
   background-image:
-    linear-gradient(rgba(22, 32, 28, .62), rgba(22, 32, 28, .34) 55%, rgba(22, 32, 28, .1)),
+    linear-gradient(rgba(15, 28, 38, .68), rgba(15, 28, 38, .42) 55%, rgba(15, 28, 38, .16)),
     url("ridge.640.jpg");
   background-image:
-    linear-gradient(rgba(22, 32, 28, .62), rgba(22, 32, 28, .34) 55%, rgba(22, 32, 28, .1)),
+    linear-gradient(rgba(15, 28, 38, .68), rgba(15, 28, 38, .42) 55%, rgba(15, 28, 38, .16)),
     image-set(url("ridge.320.avif") type("image/avif") 1x,
               url("ridge.640.avif") type("image/avif") 2x,
               url("ridge.320.jpg") type("image/jpeg") 1x,
@@ -220,10 +221,10 @@ header {
 @media (prefers-color-scheme: dark) {
   .camp {
     background-image:
-      linear-gradient(rgba(226, 233, 227, .34), rgba(226, 233, 227, .5) 55%, rgba(226, 233, 227, .62)),
+      linear-gradient(rgba(227, 234, 239, .32), rgba(227, 234, 239, .48) 55%, rgba(227, 234, 239, .6)),
       url("ridge-dark.640.jpg");
     background-image:
-      linear-gradient(rgba(226, 233, 227, .34), rgba(226, 233, 227, .5) 55%, rgba(226, 233, 227, .62)),
+      linear-gradient(rgba(227, 234, 239, .32), rgba(227, 234, 239, .48) 55%, rgba(227, 234, 239, .6)),
       image-set(url("ridge-dark.320.avif") type("image/avif") 1x,
                 url("ridge-dark.640.avif") type("image/avif") 2x,
                 url("ridge-dark.320.jpg") type("image/jpeg") 1x,
@@ -307,6 +308,7 @@ header {
   object-fit: cover;
   object-position: top center;
   display: block;
+  filter: var(--shot-filter);
 }
 
 /* No screenshot yet: the app's first two letters, set in the title face. */
