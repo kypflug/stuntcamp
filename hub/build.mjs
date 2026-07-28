@@ -216,8 +216,8 @@ function page({ site, apps, cssHref }) {
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${esc(site.title)} &mdash; ${esc(site.tagline)}</title>
 <meta name="description" content="${esc(site.blurb)}">
-<meta name="theme-color" content="#f4f1ea" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#131b1b" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#e4eaee" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#101820" media="(prefers-color-scheme: dark)">
 <meta property="og:title" content="${esc(site.title)}">
 <meta property="og:description" content="${esc(site.blurb)}">
 <meta property="og:type" content="website">
@@ -229,10 +229,10 @@ function page({ site, apps, cssHref }) {
 <meta property="og:image:alt" content="${esc(site.title)} &mdash; ${esc(site.blurb)}">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-<link rel="preload" href="assets/fonts/playfair-display-var.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="preload" href="assets/fonts/source-serif-4-var.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/space-grotesk-var.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="assets/fonts/ibm-plex-sans-400.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="assets/fonts/ibm-plex-mono-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/ibm-plex-mono-500.woff2" as="font" type="font/woff2" crossorigin>
 ${WORDMARK_ART}
 <link rel="stylesheet" href="${esc(cssHref)}">
 </head>
@@ -265,11 +265,12 @@ function notFound(site, cssHref) {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>nothing parked here &mdash; ${esc(site.title)}</title>
-<meta name="theme-color" content="#f4f1ea" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#131b1b" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#e4eaee" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#101820" media="(prefers-color-scheme: dark)">
 <link rel="icon" href="https://${esc(site.domain)}/assets/favicon.svg" type="image/svg+xml">
-<link rel="preload" href="https://${esc(site.domain)}/assets/fonts/playfair-display-var.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="preload" href="https://${esc(site.domain)}/assets/fonts/source-serif-4-var.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="https://${esc(site.domain)}/assets/fonts/space-grotesk-var.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="https://${esc(site.domain)}/assets/fonts/ibm-plex-sans-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="https://${esc(site.domain)}/assets/fonts/ibm-plex-mono-400.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="https://${esc(site.domain)}/${esc(cssHref)}">
 </head>
 <body>
