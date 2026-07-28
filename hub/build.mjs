@@ -232,6 +232,7 @@ function page({ site, apps, cssHref }) {
 <link rel="preload" href="assets/fonts/space-grotesk-var.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="assets/fonts/ibm-plex-sans-400.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="assets/fonts/ibm-plex-mono-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/ibm-plex-mono-500.woff2" as="font" type="font/woff2" crossorigin>
 ${WORDMARK_ART}
 <link rel="stylesheet" href="${esc(cssHref)}">
 </head>
@@ -269,6 +270,7 @@ function notFound(site, cssHref) {
 <link rel="icon" href="https://${esc(site.domain)}/assets/favicon.svg" type="image/svg+xml">
 <link rel="preload" href="https://${esc(site.domain)}/assets/fonts/space-grotesk-var.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="https://${esc(site.domain)}/assets/fonts/ibm-plex-sans-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="https://${esc(site.domain)}/assets/fonts/ibm-plex-mono-400.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="https://${esc(site.domain)}/${esc(cssHref)}">
 </head>
 <body>

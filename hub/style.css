@@ -66,9 +66,9 @@
   --ink-3: #5b6f7b;
 
   /* Three accents, one per kind of thing a card can be: hosted here is post
-     green, offsite is project blue, repo-only is link ochre. The border
-     variants run a shade warmer than the text ones, since a 1px rule is exempt
-     from text contrast. */
+     green, offsite is project blue, repo-only is link ochre. Post and link
+     outline themselves a shade lighter than they set type, since a 1px rule is
+     exempt from text contrast; project's blue is one value for both. */
   --accent-post: #1f6155;
   --accent-project: #23508f;
   --accent-link: #8a5327;
