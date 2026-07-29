@@ -8,7 +8,7 @@
   "source": "https://github.com/kypflug/badgy",
   "url": "https://badgy.tech",
   "tags": ["calendar", "pwa", "rto"],
-  "accent": "#12645a",
+  "accent": "#1f5f8b",
   "thumbnail": {
     "light": "assets/shots/badgy.jpg",
     "dark": "assets/shots/badgy-dark.jpg"
