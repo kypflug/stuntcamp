@@ -1,14 +1,14 @@
 {
   "$schema": "../schema.json",
   "slug": "milkbox",
-  "name": "Milkbox",
+  "name": "milkbox",
   "tagline": "A chat with yourself. Drop text, links, and files; they land on every device.",
   "type": "source-build",
   "author": { "name": "kypflug", "url": "https://github.com/kypflug" },
   "source": "https://github.com/kypflug/milkbox",
   "build": {
     "repo": "kypflug/milkbox",
-    "ref": "97a65450bf325fd9b3da3d63f0d619f80d1cd89a",
+    "ref": "3eb432895f3136a8a7680f219b1e96c6d714316a",
     "install": "npm ci",
     "command": "npm run build",
     "output": "dist"
