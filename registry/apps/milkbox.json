@@ -15,7 +15,6 @@
   },
   "tags": ["pwa", "sync", "onedrive"],
   "accent": "#2d5c8a",
-  "thumbnail": { "light": "assets/shots/milkbox.jpg", "dark": "assets/shots/milkbox-dark.jpg" },
   "added": "2026-07-29",
   "visible": true
 }
