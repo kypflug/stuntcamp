@@ -8,13 +8,13 @@
   "source": "https://github.com/kypflug/milkbox",
   "build": {
     "repo": "kypflug/milkbox",
-    "ref": "b877cd4f015255e0ac62d8a0ca874549a53fe9c6",
+    "ref": "6994495730780d44ee32f304a258ede65ac69918",
     "install": "npm ci",
     "command": "npm run build",
     "output": "dist"
   },
   "tags": ["pwa", "sync", "onedrive"],
-  "accent": "#4c4577",
+  "accent": "#2d5c8a",
   "thumbnail": { "light": "assets/shots/milkbox.jpg", "dark": "assets/shots/milkbox-dark.jpg" },
   "added": "2026-07-29",
   "visible": true
