@@ -18,11 +18,30 @@ jobs:
   shots:
     if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
+      # A pull request opened with GITHUB_TOKEN can never merge here: GitHub
+      # parks any workflow run whose triggering event came from GITHUB_TOKEN, so
+      # `validate` is created but never executes and the required status check
+      # never reports. An app installation token is an ordinary actor, so the
+      # pull request it opens starts `validate` for real.
+      #
+      # The app is deliberately not a ruleset bypass actor - it could not be one
+      # even if we wanted it, since bypass actors of type Integration are only
+      # available to organisation-owned repositories - so `main` is no more
+      # writable by the bot than by anyone else, and `validate` genuinely gates
+      # the merge rather than being waved through.
+      - name: Mint a token for the thumbnail bot
+        id: bot
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3
+        with:
+          client-id: ${{ secrets.THUMBNAILS_APP_CLIENT_ID }}
+          private-key: ${{ secrets.THUMBNAILS_APP_PRIVATE_KEY }}
+
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: ${{ github.event.repository.default_branch }}
+          token: ${{ steps.bot.outputs.token }}
 
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
@@ -44,7 +63,11 @@ jobs:
 
       - name: Open and merge a pull request with any changes
         env:
-          GH_TOKEN: ${{ github.token }}
+          # The bot acts as the app for everything except the merge itself.
+          GH_TOKEN: ${{ steps.bot.outputs.token }}
+          # The merge stays on GITHUB_TOKEN on purpose: see the note at the end
+          # of this script.
+          MERGE_TOKEN: ${{ github.token }}
           BRANCH: bot/thumbnails-${{ github.run_id }}
           BASE: ${{ github.event.repository.default_branch }}
         run: |
@@ -58,31 +81,73 @@ jobs:
           fi
 
           # The default branch requires changes to arrive through a pull
-          # request, and GITHUB_TOKEN cannot bypass that: bypass actors of type
-          # Integration are only available to organisation-owned repositories,
-          # and this one belongs to a user. So the bot raises a pull request and
-          # merges it. The ruleset targets only the default branch, so pushing
-          # the topic branch is unaffected.
+          # request and nothing here can bypass that - not GITHUB_TOKEN, and not
+          # the app either, because bypass actors of type Integration are only
+          # available to organisation-owned repositories and this one belongs to
+          # a user. The API is explicit: adding the GitHub Actions app to the
+          # bypass list fails with "Actor GitHub Actions integration must be
+          # part of the ruleset source or owner organization". So the bot raises
+          # a pull request and merges it once the checks pass, like anyone else.
+          # The ruleset targets only the default branch, so pushing the topic
+          # branch is unaffected.
           git switch -c "$BRANCH"
           git commit -m 'chore: refresh thumbnails'
           git push origin "$BRANCH"
+          sha="$(git rev-parse HEAD)"
 
-          gh pr create \
+          # Opened by the app, so this raises a real pull_request event and
+          # `validate` actually runs. Opened by GITHUB_TOKEN it would not: the
+          # run would be created and parked at action_required forever.
+          pr_url="$(gh pr create \
             --base "$BASE" \
             --head "$BRANCH" \
             --title 'chore: refresh thumbnails' \
-            --body 'Automated capture from the post-deploy thumbnail job.'
+            --body 'Automated capture from the post-deploy thumbnail job.')"
+          pr_number="${pr_url##*/}"
+          echo "opened $pr_url"
 
-          # Copilot review is required on the default branch, so the merge can
-          # be refused for a few seconds until that review lands.
+          # Every run is a full re-capture from the live site, so an older bot
+          # pull request can only ever be a subset of this one. Closing them
+          # stops the queue growing by one stranded pull request per deploy
+          # whenever a capture is not byte-identical. Opening the new one first
+          # means there is never a moment with no pull request holding captures.
+          # None of this is worth failing the run over, hence the `|| true`.
+          stale="$(gh pr list --state open --json number,headRefName --jq \
+            ".[] | select(.headRefName | startswith(\"bot/thumbnails-\")) | select(.headRefName != \"$BRANCH\") | .number" || true)"
+          for number in $stale; do
+            echo "closing superseded #$number"
+            gh pr close "$number" --delete-branch \
+              --comment "Superseded by a fresher capture in #$pr_number." || true
+          done
+
+          # `validate` is a required status check, so wait for it rather than
+          # hammering the merge endpoint and guessing why it was refused.
+          conclusion=''
+          for _ in $(seq 1 60); do
+            conclusion="$(gh api \
+              "repos/$GITHUB_REPOSITORY/commits/$sha/check-runs?check_name=validate" \
+              --jq '.check_runs | last | .conclusion // ""' || true)"
+            if [ -n "$conclusion" ]; then
+              break
+            fi
+            sleep 10
+          done
+
+          if [ "$conclusion" != 'success' ]; then
+            echo "::warning::validate concluded '${conclusion:-timed out}' on $sha; the captures are open for review at $pr_url"
+            exit 0
+          fi
+
+          # GitHub reports the merge state as unknown for a few seconds after a
+          # check completes, so an immediate merge can lose that race.
           merged=''
-          for attempt in 1 2 3 4 5; do
-            if gh pr merge "$BRANCH" --squash --delete-branch; then
+          for attempt in 1 2 3; do
+            if GH_TOKEN="$MERGE_TOKEN" gh pr merge "$BRANCH" --squash --delete-branch; then
               merged=1
               break
             fi
-            echo "merge attempt $attempt was refused; waiting for required reviews to settle"
-            sleep 20
+            echo "merge attempt $attempt was refused; waiting for the merge state to settle"
+            sleep 15
           done
 
           # Nothing is lost if the merge never lands - the captures are sitting
@@ -94,5 +159,7 @@ jobs:
           # A merge performed with GITHUB_TOKEN does not trigger workflows, so
           # this ends the chain exactly as the old direct push did: the new
           # thumbnails ship with the next deploy rather than causing one.
-          # Dispatching a deploy here instead would loop forever the moment a
-          # capture is not byte-identical.
+          # Merging with the app token instead would raise a push event on the
+          # default branch and loop forever the moment a capture is not
+          # byte-identical, which is why the merge is the one step that stays on
+          # GITHUB_TOKEN. Dispatching a deploy here would have the same effect.
