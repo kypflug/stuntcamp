@@ -1,0 +1,15 @@
+{
+  "$schema": "../schema.json",
+  "slug": "hangry",
+  "name": "hangry",
+  "tagline": "Swipe with your party until you all agree on dinner.",
+  "type": "proxy",
+  "author": { "name": "kypflug", "url": "https://github.com/kypflug" },
+  "source": "https://github.com/kypflug/hangry",
+  "url": "https://orange-desert-04dbb1b1e.7.azurestaticapps.net",
+  "tags": ["pwa", "dinner", "party", "swipe"],
+  "accent": "#b32a12",
+  "thumbnail": null,
+  "added": "2026-08-19",
+  "visible": true
+}
