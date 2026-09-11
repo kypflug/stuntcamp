@@ -1,0 +1,15 @@
+{
+  "$schema": "../schema.json",
+  "slug": "scruburls",
+  "name": "scruburls",
+  "tagline": "An unofficial Manifest V3 port of ClearURLs: strips tracking parameters from URLs with declarativeNetRequest rules.",
+  "type": "link",
+  "author": { "name": "kypflug", "url": "https://github.com/kypflug" },
+  "source": "https://github.com/kypflug/scruburls",
+  "url": "https://github.com/kypflug/scruburls",
+  "tags": ["extension", "privacy", "chrome", "mv3"],
+  "accent": "#12b5a5",
+  "thumbnail": null,
+  "added": "2026-09-11",
+  "visible": true
+}
