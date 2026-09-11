@@ -1,0 +1,15 @@
+{
+  "$schema": "../schema.json",
+  "slug": "clearurls-mv3",
+  "name": "clearurls-mv3",
+  "tagline": "A Manifest V3 port of the ClearURLs extension: strips tracking parameters from URLs with declarativeNetRequest rules.",
+  "type": "link",
+  "author": { "name": "kypflug", "url": "https://github.com/kypflug" },
+  "source": "https://github.com/kypflug/clearurls-mv3",
+  "url": "https://github.com/kypflug/clearurls-mv3",
+  "tags": ["extension", "privacy", "chrome", "mv3"],
+  "accent": "#ff7800",
+  "thumbnail": null,
+  "added": "2026-09-11",
+  "visible": true
+}
