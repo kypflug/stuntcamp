@@ -8,7 +8,7 @@
   "source": "https://github.com/kypflug/milkbox",
   "build": {
     "repo": "kypflug/milkbox",
-    "ref": "6caa527a7af5d8244ce6c615cad8697a98f63d5d",
+    "ref": "065c03c49cc9189a5fc58e390bfdad9457075317",
     "install": "npm ci",
     "command": "npm run build",
     "output": "dist"
